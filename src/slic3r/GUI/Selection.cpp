@@ -190,15 +190,54 @@ void Selection::set_mode(EMode mode) {
     m_mode = mode;
 }
 
-int Selection::query_real_volume_idx_from_other_view(unsigned int object_idx, unsigned int instance_idx, unsigned int model_volume_idx)
+int Selection::query_real_volume_idx_by_part_guid(const std::string& part_guid, unsigned int instance_idx)
 {
-    for (int i = 0; i < m_volumes->size(); i++) {
-        auto v = (*m_volumes)[i];
-        if (v->object_idx() == object_idx && instance_idx == v->instance_idx() && model_volume_idx == v->volume_idx()) {
+    if (part_guid.empty() || m_model == nullptr)
+        return -1;
+    // First try to honor the requested instance; fall back to the first matching volume of any instance.
+    int fallback = -1;
+    for (int i = 0; i < (int) m_volumes->size(); i++) {
+        const GLVolume* v = (*m_volumes)[i];
+        const int obj_idx = v->object_idx();
+        const int vol_idx = v->volume_idx();
+        if (obj_idx < 0 || vol_idx < 0 || obj_idx >= (int) m_model->objects.size())
+            continue;
+        const ModelObject* mo = m_model->objects[obj_idx];
+        if (mo == nullptr || vol_idx >= (int) mo->volumes.size())
+            continue;
+        const ModelVolume* mv = mo->volumes[vol_idx];
+        if (mv == nullptr)
+            continue;
+        // A GLVolume in the assembly view matches when its backing ModelVolume shares identity with the
+        // prepare-side part: same part_guid, or it references that prepare part via assembly_src_guid.
+        if (mv->part_guid() != part_guid && mv->assembly_src_guid() != part_guid)
+            continue;
+        if ((unsigned int) v->instance_idx() == instance_idx)
             return i;
-        }
+        if (fallback < 0)
+            fallback = i;
     }
-    return -1;
+    return fallback;
+}
+
+int Selection::query_real_volume_idx_from_other_model_volume(const GLVolume* source_volume, const Model& source_model, bool use_assembly_src_guid)
+{
+    if (source_volume == nullptr)
+        return -1;
+    const int obj_idx = source_volume->object_idx();
+    const int vol_idx = source_volume->volume_idx();
+    if (obj_idx < 0 || vol_idx < 0 || obj_idx >= (int) source_model.objects.size())
+        return -1;
+    const ModelObject* mo = source_model.objects[obj_idx];
+    if (mo == nullptr || vol_idx >= (int) mo->volumes.size())
+        return -1;
+    const ModelVolume* mv = mo->volumes[vol_idx];
+    if (mv == nullptr)
+        return -1;
+    const std::string& guid = use_assembly_src_guid && !mv->assembly_src_guid().empty() ? mv->assembly_src_guid() : mv->part_guid();
+    if (guid.empty())
+        return -1;
+    return query_real_volume_idx_by_part_guid(guid, (unsigned int) source_volume->instance_idx());
 }
 
 void Selection::add(unsigned int volume_idx, bool as_single_selection, bool check_for_already_contained)
@@ -1208,7 +1247,7 @@ void Selection::move_to_center(const Vec3d& displacement, bool local)
             if (local)
                 v.set_volume_offset(m_cache.volumes_data[i].get_volume_position() + displacement);
             else {
-                const Vec3d local_displacement = (m_cache.volumes_data[i].get_instance_rotation_matrix() * m_cache.volumes_data[i].get_instance_scale_matrix() * m_cache.volumes_data[i].get_instance_mirror_matrix()).inverse() * displacement;
+                const Vec3d local_displacement = m_cache.volumes_data[i].get_instance_full_matrix().linear().inverse() * displacement;
                 v.set_volume_offset(m_cache.volumes_data[i].get_volume_position() + local_displacement);
             }
         }
@@ -1217,7 +1256,7 @@ void Selection::move_to_center(const Vec3d& displacement, bool local)
                 v.set_instance_offset(m_cache.volumes_data[i].get_instance_position() + displacement);
             }
             else {
-                const Vec3d local_displacement = (m_cache.volumes_data[i].get_instance_rotation_matrix() * m_cache.volumes_data[i].get_instance_scale_matrix() * m_cache.volumes_data[i].get_instance_mirror_matrix()).inverse() * displacement;
+                const Vec3d local_displacement = m_cache.volumes_data[i].get_instance_full_matrix().linear().inverse() * displacement;
                 v.set_volume_offset(m_cache.volumes_data[i].get_volume_position() + local_displacement);
                 translation_type = Volume;
             }
@@ -2045,6 +2084,12 @@ void Selection::notify_instance_update(int object_idx, int instance_idx)
         else
             plate_list.notify_instance_update(object_idx, instance_idx);
     }
+}
+
+void Selection::set_volume_selection_mode(EMode mode)
+{
+    if (!m_volume_selection_locked)
+        m_volume_selection_mode = mode;
 }
 
 void Selection::erase()
@@ -3361,6 +3406,7 @@ void Selection::paste_volumes_from_clipboard()
         Transform3d src_matrix = src_object->instances[0]->get_transformation().get_matrix_no_offset();
         Transform3d dst_matrix = dst_instance->get_transformation().get_matrix_no_offset();
         bool from_same_object = (src_object->input_file == dst_object->input_file) && src_matrix.isApprox(dst_matrix);
+        const Transform3d vol_linear_correction = dst_matrix.inverse() * src_matrix;
 
         // used to keep relative position of multivolume selections when pasting from another object
         BoundingBoxf3 total_bb;
@@ -3370,6 +3416,7 @@ void Selection::paste_volumes_from_clipboard()
         {
             ModelVolume* dst_volume = dst_object->add_volume(*src_volume);
             dst_volume->set_new_unique_id();
+            dst_volume->ensure_part_guid(true);
             if (from_same_object)
             {
 //                // if the volume comes from the same object, apply the offset in world system
@@ -3378,9 +3425,11 @@ void Selection::paste_volumes_from_clipboard()
             }
             else
             {
+                // keep the real size/orientation across objects with different instance transforms
+                dst_volume->set_transformation(vol_linear_correction * src_volume->get_matrix());
                 // if the volume comes from another object, apply the offset as done when adding modifiers
                 // see ObjectList::load_generic_subobject()
-                total_bb.merge(dst_volume->mesh().bounding_box().transformed(src_volume->get_matrix()));
+                total_bb.merge(dst_volume->mesh().bounding_box().transformed(dst_volume->get_matrix()));
             }
 
             volumes.push_back(dst_volume);

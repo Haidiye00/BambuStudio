@@ -8,6 +8,8 @@
 #include "slic3r/GUI/TaskManager.hpp"
 #include "slic3r/GUI/OpenGLManager.hpp"
 #include "format.hpp"
+#include <wx/language.h>
+#include <wx/weakref.h>
 
 // Localization headers: include libslic3r version first so everything in this file
 // uses the slic3r/GUI version (the macros will take precedence over the functions).
@@ -34,6 +36,11 @@
 #include <boost/nowide/convert.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
+#include "Printer/LiveViewTrackContext.h"
 
 #include <wx/stdpaths.h>
 #include <wx/imagpng.h>
@@ -70,6 +77,7 @@
 #include "GUI_Utils.hpp"
 #include "3DScene.hpp"
 #include "MainFrame.hpp"
+#include "slic3r/GUI/Widgets/WebView.hpp"
 #include "Plater.hpp"
 #include "GLCanvas3D.hpp"
 #include "EncodedFilament.hpp"
@@ -116,6 +124,7 @@
 #include "ModelMall.hpp"
 #include "HintNotification.hpp"
 #include "BBLUtil.hpp"
+#include "fila_manager/wgtFilaManagerFeature.h"
 
 //#ifdef WIN32
 //#include "BaseException.h"
@@ -1440,8 +1449,25 @@ GUI_App::GUI_App()
     }
     this->init_download_path();
 
+#if defined(__WXOSX__)
+    m_macos_pending_pump_timer.Bind(wxEVT_TIMER, &GUI_App::on_macos_pending_pump, this);
+#endif
+
     reset_to_active();
 }
+
+#if defined(__WXOSX__)
+void GUI_App::on_macos_pending_pump(wxTimerEvent& WXUNUSED(evt))
+{
+    // STUDIO-18472: drain wx pending events ourselves. After the Filament Manager
+    // WKWebView churn the macOS run loop no longer reliably wakes to call
+    // ProcessPendingEvents() from its observer, which strands deferred actions
+    // (project restore, tab-bar page switches posted via wxPostEvent). The
+    // HasPendingEvents() guard makes this a no-op on the common (healthy) path.
+    if (wxTheApp && wxTheApp->HasPendingEvents())
+        wxTheApp->ProcessPendingEvents();
+}
+#endif
 
 void GUI_App::shutdown()
 {
@@ -2059,21 +2085,25 @@ void GUI_App::init_networking_callbacks()
             }
             if (return_code < 0) { //#define MQTTASYNC_SUCCESS 0
                 GUI::wxGetApp().CallAfter([this] {
-                    static bool is_showing = false;
-                    if (is_showing) return;
-                    is_showing = true;
+                    m_homepage_server_connect_failed = true;
+                    sync_left_server_connect_status();
+
+                    static bool s_mqtt_connect_failed_dialog_shown = false;
+                    if (s_mqtt_connect_failed_dialog_shown) return;
+                    s_mqtt_connect_failed_dialog_shown = true;
                     BOOST_LOG_TRIVIAL(trace) << "static: server connection failed";
                     MessageDialog msg_dlg(nullptr, _L("Failed to connect to the cloud device server. Please check your network and firewall."), "", wxOK);
                     msg_dlg.ShowModal();
-                    is_showing = false;
                 });
                 return;
             }
             GUI::wxGetApp().CallAfter([this] {
-                if (is_closing())
-                    return;
-                BOOST_LOG_TRIVIAL(trace) << "static: server connected";
-                m_agent->set_user_selected_machine(m_agent->get_user_selected_machine());
+                    if (is_closing())
+                        return;
+                    m_homepage_server_connect_failed = false;
+                    sync_left_server_connect_status();
+                    BOOST_LOG_TRIVIAL(trace) << "static: server connected";
+                    m_agent->set_user_selected_machine(m_agent->get_user_selected_machine());
                     if (this->is_enable_multi_machine()) {
                         auto evt = new wxCommandEvent(EVT_UPDATE_MACHINE_LIST);
                         wxQueueEvent(this, evt);
@@ -2228,7 +2258,14 @@ void GUI_App::init_networking_callbacks()
                         obj->parse_json("cloud", msg);
                         GUI::wxGetApp().sidebar().load_ams_list(obj);
                         // STUDIO-18155: AMS 状态变化驱动耗材同步（本地 store + 节流后云端）
-                        if (auto* sync = wxGetApp().fila_manager_sync()) sync->on_device_update(obj);
+                        // 仅在在位字段实际变化时才推 spool list，避免每条 MQTT 都整体重渲。
+                        bool fila_mount_changed = false;
+                        if (auto* sync = wxGetApp().fila_manager_sync())
+                            fila_mount_changed = sync->on_device_update(obj);
+                        if (!m_disable_fila_manager && mainframe && mainframe->web_device()) {
+                            if (fila_mount_changed)
+                                mainframe->web_device()->NotifyFilamentSessionState();
+                        }
                     } else {
                         obj->parse_json("cloud", msg, true);
                     }
@@ -2277,7 +2314,14 @@ void GUI_App::init_networking_callbacks()
                     if (this->m_device_manager->get_selected_machine() == obj) {
                         GUI::wxGetApp().sidebar().load_ams_list(obj);
                         // STUDIO-18155: AMS 状态变化驱动耗材同步（本地 store + 节流后云端）
-                        if (auto* sync = wxGetApp().fila_manager_sync()) sync->on_device_update(obj);
+                        // 仅在在位字段实际变化时才推 spool list，避免每条 MQTT 都整体重渲。
+                        bool fila_mount_changed = false;
+                        if (auto* sync = wxGetApp().fila_manager_sync())
+                            fila_mount_changed = sync->on_device_update(obj);
+                        if (!m_disable_fila_manager && mainframe && mainframe->web_device()) {
+                            if (fila_mount_changed)
+                                mainframe->web_device()->NotifyFilamentSessionState();
+                        }
                     }
                 }
 
@@ -2469,6 +2513,18 @@ static LogEncOptions s_get_log_enc_opts()
 
     return enc_options;
 };
+
+bool GUI_App::confirm_mesh_paint_warning()
+{
+    MessageDialog dlg(nullptr,
+        _L("This operation rebuilds the model's mesh. Painted color, supports, seam and "
+           "fuzzy-skin will be transferred to the new mesh by a best-effort approximation, "
+           "so the result may be slightly off and, in rare cases, some painting may be lost.\n\n"
+           "Do you want to continue?"),
+        _L("Painting may change"),
+        wxICON_WARNING | wxYES_NO | wxNO_DEFAULT);
+    return dlg.ShowModal() == wxID_YES;
+}
 
 void GUI_App::init_app_config()
 {
@@ -2781,7 +2837,6 @@ int GUI_App::OnExit()
     }
 
     if (m_fila_manager_store) {
-        m_fila_manager_store->save();
         delete m_fila_manager_store;
         m_fila_manager_store = nullptr;
     }
@@ -2808,6 +2863,17 @@ int GUI_App::OnExit()
 #if !BBL_RELEASE_TO_PUBLIC
     m_fila_debug_sink = nullptr;
 #endif
+
+    // Keep filaments that were auto-enabled during AMS sync (machine-used but not
+    // ticked in preferences) installed across restarts. Done once here instead of on
+    // every sync so it stays off the hot sync path.
+    if (preset_bundle && app_config) {
+        for (const auto &preset_name : preset_bundle->filament_presets) {
+            const Preset *preset = preset_bundle->filaments.find_preset(preset_name, false, true);
+            if (preset && preset->is_system && preset->is_visible)
+                app_config->set(AppConfig::SECTION_FILAMENTS, preset->name, "true");
+        }
+    }
 
     // Flush any config changes that were deferred by the idle-handler debounce.
     if (app_config && app_config->dirty())
@@ -2860,6 +2926,41 @@ class wxBoostLog : public wxLog
         wxLog::SetActiveTarget(t);
     }
 };
+
+// Populate process-wide live-view track context (client + session).
+// Called once during GUI_App::OnInit, before any tunnel-using code can emit
+// a track event.
+//
+// Fields filled here are the ones we can know reliably at startup. Other
+// fields (region / network_type / os_version) are intentionally left empty
+// — they can be filled later as the data becomes available; build_envelope
+// just skips empty strings.
+static void init_live_view_track_context(AppConfig* app_config)
+{
+    namespace track = BambuLiveViewTrack;
+
+    track::ClientInfo client;
+    client.client_ver = SLIC3R_VERSION;
+    if (app_config) {
+        client.client_id = app_config->get("slicer_uuid");
+    }
+#if defined(_WIN32)
+    client.platform = "windows";
+#elif defined(__APPLE__)
+    client.platform = "macos";
+#else
+    client.platform = "linux";
+#endif
+
+    track::SessionInfo session;
+    session.session_id = boost::uuids::to_string(boost::uuids::random_generator()());
+    session.start_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
+
+    auto& ctx = track::LiveViewTrackContext::instance();
+    ctx.init_client(client);
+    ctx.init_session(session);
+}
 
 std::string get_system_info()
 {
@@ -2953,6 +3054,8 @@ bool GUI_App::on_init_inner()
 #endif
 
     BOOST_LOG_TRIVIAL(info) << get_system_info();
+
+    init_live_view_track_context(app_config);
 
 // initialize label colors and fonts
     init_label_colours();
@@ -3091,7 +3194,12 @@ bool GUI_App::on_init_inner()
         p_ogl_manager->set_advanced_gcode_viewer_enabled(b_advanced_gcode_viewer_enabled);
     }
 
-    BBLSplashScreen * scrn = nullptr;
+    wxWeakRef<BBLSplashScreen> scrn;
+
+    // BBS: ensure the splash screen is torn down on every exit path safely
+    ScopeGuard delete_scrn([&scrn]() {
+        if (scrn) scrn->Destroy();
+    });
     const bool show_splash_screen = true;
     if (show_splash_screen) {
         // make a bitmap with dark grey banner on the left side
@@ -3108,7 +3216,7 @@ bool GUI_App::on_init_inner()
 
         BOOST_LOG_TRIVIAL(info) << "begin to show the splash screen...";
         //BBS use BBL splashScreen
-        scrn = new BBLSplashScreen(bmp, wxSPLASH_CENTRE_ON_SCREEN | wxSPLASH_TIMEOUT, 10000, splashscreen_pos);
+        scrn = new BBLSplashScreen(bmp, wxSPLASH_CENTRE_ON_SCREEN, 0, splashscreen_pos);
 #ifndef __linux__
         wxYield();
 #endif
@@ -3286,30 +3394,40 @@ bool GUI_App::on_init_inner()
     // Let the libslic3r know the callback, which will translate messages on demand.
     Slic3r::I18N::set_translate_callback(libslic3r_translate_callback);
 
-    // Initialize Filament Manager store & sync
-    if (!m_fila_manager_store) {
-        m_fila_manager_store = new wgtFilaManagerStore();
-        m_fila_manager_store->load();
-        BOOST_LOG_TRIVIAL(info) << "Filament Manager store initialized";
-    }
-    if (!m_fila_manager_sync) {
-        m_fila_manager_sync = new wgtFilaManagerSync(m_fila_manager_store);
-        BOOST_LOG_TRIVIAL(info) << "Filament Manager sync initialized";
-    }
-    // Cloud layer — owns HTTP client, high-level sync and the serialization dispatcher.
-    if (!m_fila_manager_cloud_client) {
-        m_fila_manager_cloud_client = new wgtFilaManagerCloudClient();
-        BOOST_LOG_TRIVIAL(info) << "Filament Manager cloud client initialized";
-    }
-    if (!m_fila_manager_cloud_sync) {
-        m_fila_manager_cloud_sync = new wgtFilaManagerCloudSync(m_fila_manager_store,
-                                                                m_fila_manager_cloud_client);
-        BOOST_LOG_TRIVIAL(info) << "Filament Manager cloud sync initialized";
-    }
-    if (!m_fila_manager_cloud_disp) {
-        m_fila_manager_cloud_disp = new wgtFilaManagerCloudDispatcher(m_fila_manager_cloud_sync,
-                                                                     m_fila_manager_cloud_client);
-        BOOST_LOG_TRIVIAL(info) << "Filament Manager cloud dispatcher initialized";
+#ifdef __APPLE__
+    constexpr bool is_macos = true;
+#else
+    constexpr bool is_macos = false;
+#endif
+    m_disable_fila_manager = is_fila_manager_disabled_by_config(
+        app_config->get(FilaManagerEnabledConfigKey), is_macos);
+    if (m_disable_fila_manager) {
+        BOOST_LOG_TRIVIAL(info) << "Filament Manager disabled by " << FilaManagerEnabledConfigKey;
+    } else {
+        // Initialize Filament Manager store & sync
+        if (!m_fila_manager_store) {
+            m_fila_manager_store = new wgtFilaManagerStore();
+            BOOST_LOG_TRIVIAL(info) << "Filament Manager store initialized";
+        }
+        if (!m_fila_manager_sync) {
+            m_fila_manager_sync = new wgtFilaManagerSync(m_fila_manager_store);
+            BOOST_LOG_TRIVIAL(info) << "Filament Manager sync initialized";
+        }
+        // Cloud layer — owns HTTP client, high-level sync and the serialization dispatcher.
+        if (!m_fila_manager_cloud_client) {
+            m_fila_manager_cloud_client = new wgtFilaManagerCloudClient();
+            BOOST_LOG_TRIVIAL(info) << "Filament Manager cloud client initialized";
+        }
+        if (!m_fila_manager_cloud_sync) {
+            m_fila_manager_cloud_sync = new wgtFilaManagerCloudSync(m_fila_manager_store,
+                                                                    m_fila_manager_cloud_client);
+            BOOST_LOG_TRIVIAL(info) << "Filament Manager cloud sync initialized";
+        }
+        if (!m_fila_manager_cloud_disp) {
+            m_fila_manager_cloud_disp = new wgtFilaManagerCloudDispatcher(m_fila_manager_cloud_sync,
+                                                                         m_fila_manager_cloud_client);
+            BOOST_LOG_TRIVIAL(info) << "Filament Manager cloud dispatcher initialized";
+        }
     }
 
     BOOST_LOG_TRIVIAL(info) << "create the main window";
@@ -3451,8 +3569,6 @@ bool GUI_App::on_init_inner()
     flush_logs();
 
     BOOST_LOG_TRIVIAL(info) << "finished the gui app init";
-    //BBS: delete splash screen
-    delete scrn;
     return true;
 }
 
@@ -4087,6 +4203,21 @@ void GUI_App::recreate_GUI(const wxString &msg_name)
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << "recreate_GUI enter";
     m_is_recreating_gui = true;
 
+#if defined(__WXOSX__)
+    // macOS root cause (STUDIO-18472): switching language rebuilds the MainFrame and
+    // defers destruction of the old one (old_main_frame->Destroy() below), which only
+    // completes once wxEVT_IDLE fires. If the old frame still hosts a live Filament
+    // Manager WKWebView (e.g. the language was changed while that tab was visible, or
+    // the asynchronous about:blank teardown from a tab switch had not finished yet),
+    // its React app keeps the CFRunLoop busy and starves idle app-wide, so the old
+    // frame is never collected and the new frame cannot render or switch tabs.
+    // Proactively suspend it here so the old frame is guaranteed quiet before its
+    // deferred destruction, independent of which tab was visible or how fast the user
+    // reached Preferences. No-op off macOS.
+    if (mainframe && mainframe->web_device())
+        mainframe->web_device()->Suspend();
+#endif
+
     update_http_extra_header();
 
     mainframe->shutdown();
@@ -4142,6 +4273,17 @@ void GUI_App::recreate_GUI(const wxString &msg_name)
     update_publish_status();
 
     m_is_recreating_gui = false;
+
+#if defined(__WXOSX__)
+    // STUDIO-18472: a GUI rebuild just happened (and trigger_restore_project()
+    // queued EVT_RESTORE_PROJECT). From here on the macOS run loop may fail to
+    // wake for wx pending events after the Filament Manager WKWebView churn, so
+    // arm the pending-event pump for the rest of the session. This dispatches
+    // the deferred restore promptly (prepare canvas no longer stays blank) and
+    // keeps later tab-bar page switches (posted via wxPostEvent) responsive.
+    if (!m_macos_pending_pump_timer.IsRunning())
+        m_macos_pending_pump_timer.Start(30);
+#endif
 
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << "recreate_GUI exit";
 }
@@ -4482,12 +4624,25 @@ void GUI_App::get_login_info()
             GUI::wxGetApp().run_script_left(strJS);
         }
         else {
+            m_homepage_server_connect_failed = false;
             m_agent->user_logout();
             std::string logout_cmd = m_agent->build_logout_cmd();
             wxString strJS = wxString::Format("window.postMessage(%s)", logout_cmd);
             GUI::wxGetApp().run_script_left(strJS);
         }
     }
+    sync_left_server_connect_status();
+}
+
+void GUI_App::sync_left_server_connect_status()
+{
+    json msg           = json::object();
+    msg["sequence_id"] = "10001";
+    msg["command"]     = "homepage_server_connect_status";
+    msg["failed"]      = m_homepage_server_connect_failed ? 1 : 0;
+
+    wxString strJS = wxString::Format("window.postMessage(%s)", msg.dump(-1, ' ', false, json::error_handler_t::ignore));
+    GUI::wxGetApp().run_script_left(strJS);
 }
 
 bool GUI_App::is_user_login()
@@ -4528,11 +4683,15 @@ void GUI_App::request_user_login(int online_login)
 
 void GUI_App::request_user_logout()
 {
+    m_homepage_server_connect_failed = false;
+    sync_left_server_connect_status();
+
     if (m_agent && m_agent->is_user_login()) {
         m_load_last_machine.is_list_ok = false;
         m_load_last_machine.is_mqtt_ok = false;
         // Update data first before showing dialogs
         m_agent->user_logout(true);
+        WebView::ClearBambulabTokenCookies();
         if (auto obj = m_device_manager->get_selected_machine();
             obj && obj->is_cloud_mode_printer()) {
             m_device_manager->record_user_last_machine("");
@@ -4554,15 +4713,15 @@ void GUI_App::request_user_logout()
         GUI::wxGetApp().stop_sync_user_preset();
 
         // Drop queued cloud ops so they don't fire against a stale user.
-        if (m_fila_manager_cloud_disp) {
+        if (!m_disable_fila_manager && m_fila_manager_cloud_disp) {
             m_fila_manager_cloud_disp->clear_pending();
         }
         // STUDIO-18155: 清 AMS auto-push 节流账本，避免账号 A 的 cooldown
         // 影响登入账号 B 后第一次 sync 触发 push 的时机。
-        if (m_fila_manager_cloud_sync) {
+        if (!m_disable_fila_manager && m_fila_manager_cloud_sync) {
             m_fila_manager_cloud_sync->throttle().clear_all();
         }
-        if (mainframe && mainframe->web_device()) {
+        if (!m_disable_fila_manager && mainframe && mainframe->web_device()) {
             mainframe->web_device()->NotifyFilamentSessionState();
         }
     }
@@ -5216,10 +5375,10 @@ void GUI_App::on_user_login_handle(wxCommandEvent &evt)
 
         // Trigger filament-manager cloud pull on the dispatcher queue; no-op if
         // already pulling.  Runs after login so auth token is available.
-        if (m_fila_manager_cloud_disp) {
+        if (!m_disable_fila_manager && m_fila_manager_cloud_disp) {
             m_fila_manager_cloud_disp->enqueue_pull();
         }
-        if (mainframe && mainframe->web_device()) {
+        if (!m_disable_fila_manager && mainframe && mainframe->web_device()) {
             mainframe->web_device()->NotifyFilamentSessionState();
         }
     }
@@ -5497,10 +5656,19 @@ void GUI_App::check_beta_version(bool show_tips_when_no_beta)
                                 }
                             }
                         }
+                        // Newest beta located and scheduled; stop scanning older entries.
+                        return;
                     }
                 }
-                return;
             }
+            // No beta release exists across all GitHub releases (e.g. the newest
+            // release is stable). Fall back to the regular "no new version" toast
+            // instead of silently returning after inspecting only the first entry.
+            CallAfter([this, show_tips_when_no_beta]() {
+                if (show_tips_when_no_beta) {
+                    this->no_new_version();
+                }
+            });
         }
         catch (...) {
             ;
@@ -6428,6 +6596,8 @@ bool GUI_App::load_language(wxString language, bool initial)
             wxLanguage cur_lang = wxLANGUAGE_UNKNOWN;
             auto cur_lang_info = wxLocale::FindLanguageInfo(language);
             if (cur_lang_info) { cur_lang = static_cast<wxLanguage> (cur_lang_info->Language);}
+            // all share zh_TW
+            if(cur_lang == wxLANGUAGE_CHINESE || cur_lang==wxLANGUAGE_CHINESE_TAIWAN) cur_lang = wxLANGUAGE_CHINESE_TRADITIONAL;
             if (std::find(s_supported_languages.begin(), s_supported_languages.end(), cur_lang) == s_supported_languages.end())
             {
                 app_config->set("language", "");
@@ -6439,7 +6609,8 @@ bool GUI_App::load_language(wxString language, bool initial)
         	BOOST_LOG_TRIVIAL(info) << boost::format("language provided by BambuStudio.conf: %1%") % language;
         else {
             // Get the system language.
-            const wxLanguage lang_system = wxLanguage(wxLocale::GetSystemLanguage());
+            wxLanguage lang_system = wxLanguage(wxLocale::GetSystemLanguage());
+            if(lang_system == wxLANGUAGE_CHINESE || lang_system==wxLANGUAGE_CHINESE_TAIWAN) lang_system = wxLANGUAGE_CHINESE_TRADITIONAL;
             if (std::find(s_supported_languages.begin(), s_supported_languages.end(), lang_system) != s_supported_languages.end()) {
                 m_language_info_system = wxLocale::GetLanguageInfo(lang_system);
 #ifdef __WXMSW__
@@ -6889,14 +7060,14 @@ void  GUI_App::show_ip_address_enter_dialog_handler(wxCommandEvent& evt)
 //    menu->AppendSubMenu(local_menu, _L("Configuration"));
 //}
 
-void GUI_App::open_preferences(size_t open_on_tab, const std::string& highlight_option)
+void GUI_App::open_preferences()
 {
     bool app_layout_changed = false;
     {
         // the dialog needs to be destroyed before the call to recreate_GUI()
         // or sometimes the application crashes into wxDialogBase() destructor
         // so we put it into an inner scope
-        PreferencesDialog dlg(mainframe, open_on_tab, highlight_option);
+        PreferencesDialog dlg(mainframe);
         dlg.ShowModal();
 
         // BBS
@@ -7788,7 +7959,7 @@ void GUI_App::gcode_thumbnails_debug()
     unsigned int width = 0;
     unsigned int height = 0;
 
-    wxFileDialog dialog(GetTopWindow(), _L("Select a G-code file:"), "", "", "G-code files (*.gcode)|*.gcode;*.GCODE;", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+    wxFileDialog dialog(GetTopWindow(), _L("Select a G-code file:"), from_u8(wxGetApp().app_config->get_last_dir()), "", "G-code files (*.gcode)|*.gcode;*.GCODE;", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
     if (dialog.ShowModal() != wxID_OK)
         return;
 

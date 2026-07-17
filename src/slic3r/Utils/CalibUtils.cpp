@@ -89,6 +89,8 @@ wxString get_nozzle_volume_type_name(NozzleVolumeType type)
         return _L("Hybrid");
     } else if (NozzleVolumeType::nvtTPUHighFlow == type) {
         return _L("TPU High Flow");
+    } else if (NozzleVolumeType::nvtE3DHighFlow == type) {
+        return _L("E3D High Flow");
     }
     return wxString();
 }
@@ -822,6 +824,14 @@ bool CalibUtils::calib_flowrate(int pass, const CalibInfo &calib_info, wxString 
 
     read_model_from_file(input_file, model);
 
+    if (calib_info.print_prest == nullptr || calib_info.printer_prest == nullptr || calib_info.filament_prest == nullptr) {
+        error_message = _L("Failed to load calibration presets. Please check whether the selected printer, nozzle and print profiles are valid.");
+        BOOST_LOG_TRIVIAL(error) << "calib_flowrate: null preset, print_prest=" << calib_info.print_prest
+                                 << " printer_prest=" << calib_info.printer_prest
+                                 << " filament_prest=" << calib_info.filament_prest;
+        return false;
+    }
+
     DynamicPrintConfig print_config    = calib_info.print_prest->config;
     DynamicPrintConfig filament_config = calib_info.filament_prest->config;
     DynamicPrintConfig printer_config  = calib_info.printer_prest->config;
@@ -1083,9 +1093,16 @@ void CalibUtils::set_for_auto_pa_model_and_config(const std::vector<CalibInfo> &
 
     std::vector<std::string> &filament_colors = full_config.option<ConfigOptionStrings>("filament_colour")->values;
     filament_colors.resize(sorted_calib_infos.size(), "#000000");
+    // filament_id aligned with the sorted calib order, used to look up measured purge volumes.
+    std::vector<std::string> sorted_filament_ids(sorted_calib_infos.size());
     for (size_t i = 0; i < sorted_calib_infos.size(); ++i) {
         filament_colors[i] = sorted_calib_infos[i].filament_color;
+        if (sorted_calib_infos[i].filament_prest)
+            sorted_filament_ids[i] = sorted_calib_infos[i].filament_prest->filament_id;
     }
+    auto get_calib_filament_id = [&sorted_filament_ids](size_t idx) -> std::string {
+        return (idx < sorted_filament_ids.size()) ? sorted_filament_ids[idx] : std::string();
+    };
 
     // Add flush volume matrix
     std::vector<double> flush_matrix_vec;
@@ -1100,7 +1117,7 @@ void CalibUtils::set_for_auto_pa_model_and_config(const std::vector<CalibInfo> &
                     Slic3r::FlushVolCalculator calculator(min_flush_volumes[from_idx], Slic3r::g_max_flush_volume, nozzle_flush_dataset[e_idx]);
                     wxColour from = wxColour(filament_colors[from_idx]);
                     wxColour to = wxColour(filament_colors[to_idx]);
-                    int volume = calculator.calc_flush_vol(from.Alpha(), from.Red(), from.Green(), from.Blue(), to.Alpha(), to.Red(), to.Green(), to.Blue());
+                    int volume = calculator.calc_flush_vol(get_calib_filament_id(from_idx), get_calib_filament_id(to_idx), from.Alpha(), from.Red(), from.Green(), from.Blue(), to.Alpha(), to.Red(), to.Green(), to.Blue());
                     flush_matrix_vec.emplace_back(double(volume));
                 }
             }
@@ -1268,6 +1285,14 @@ bool CalibUtils::calib_generic_PA(const CalibInfo &calib_info, wxString &error_m
 
     read_model_from_file(input_file, model);
 
+    if (calib_info.print_prest == nullptr || calib_info.printer_prest == nullptr || calib_info.filament_prest == nullptr) {
+        error_message = _L("Failed to load calibration presets. Please check whether the selected printer, nozzle and print profiles are valid.");
+        BOOST_LOG_TRIVIAL(error) << "calib_generic_PA: null preset, print_prest=" << calib_info.print_prest
+                                 << " printer_prest=" << calib_info.printer_prest
+                                 << " filament_prest=" << calib_info.filament_prest;
+        return false;
+    }
+
     DynamicPrintConfig print_config    = calib_info.print_prest->config;
     DynamicPrintConfig filament_config = calib_info.filament_prest->config;
     DynamicPrintConfig printer_config  = calib_info.printer_prest->config;
@@ -1355,6 +1380,14 @@ void CalibUtils::calib_temptue(const CalibInfo &calib_info, wxString &error_mess
         }
     }
 
+    if (calib_info.print_prest == nullptr || calib_info.printer_prest == nullptr || calib_info.filament_prest == nullptr) {
+        error_message = _L("Failed to load calibration presets. Please check whether the selected printer, nozzle and print profiles are valid.");
+        BOOST_LOG_TRIVIAL(error) << "calib_temptue: null preset, print_prest=" << calib_info.print_prest
+                                 << " printer_prest=" << calib_info.printer_prest
+                                 << " filament_prest=" << calib_info.filament_prest;
+        return;
+    }
+
     // edit preset
     DynamicPrintConfig print_config    = calib_info.print_prest->config;
     DynamicPrintConfig filament_config = calib_info.filament_prest->config;
@@ -1395,6 +1428,14 @@ void CalibUtils::calib_max_vol_speed(const CalibInfo &calib_info, wxString &erro
     Model       model;
     std::string input_file = Slic3r::resources_dir() + "/calib/volumetric_speed/SpeedTestStructure.step";
     read_model_from_file(input_file, model);
+
+    if (calib_info.print_prest == nullptr || calib_info.printer_prest == nullptr || calib_info.filament_prest == nullptr) {
+        error_message = _L("Failed to load calibration presets. Please check whether the selected printer, nozzle and print profiles are valid.");
+        BOOST_LOG_TRIVIAL(error) << "calib_max_vol_speed: null preset, print_prest=" << calib_info.print_prest
+                                 << " printer_prest=" << calib_info.printer_prest
+                                 << " filament_prest=" << calib_info.filament_prest;
+        return;
+    }
 
     DynamicPrintConfig print_config    = calib_info.print_prest->config;
     DynamicPrintConfig filament_config = calib_info.filament_prest->config;
@@ -1491,6 +1532,14 @@ void CalibUtils::calib_VFA(const CalibInfo &calib_info, wxString &error_message)
     std::string input_file = Slic3r::resources_dir() + "/calib/vfa/VFA.stl";
     read_model_from_file(input_file, model);
 
+    if (calib_info.print_prest == nullptr || calib_info.printer_prest == nullptr || calib_info.filament_prest == nullptr) {
+        error_message = _L("Failed to load calibration presets. Please check whether the selected printer, nozzle and print profiles are valid.");
+        BOOST_LOG_TRIVIAL(error) << "calib_VFA: null preset, print_prest=" << calib_info.print_prest
+                                 << " printer_prest=" << calib_info.printer_prest
+                                 << " filament_prest=" << calib_info.filament_prest;
+        return;
+    }
+
     DynamicPrintConfig print_config    = calib_info.print_prest->config;
     DynamicPrintConfig filament_config = calib_info.filament_prest->config;
     DynamicPrintConfig printer_config  = calib_info.printer_prest->config;
@@ -1564,6 +1613,14 @@ void CalibUtils::calib_retraction(const CalibInfo &calib_info, wxString &error_m
     Model model;
     std::string input_file = Slic3r::resources_dir() + "/calib/retraction/retraction_tower.stl";
     read_model_from_file(input_file, model);
+
+    if (calib_info.print_prest == nullptr || calib_info.printer_prest == nullptr || calib_info.filament_prest == nullptr) {
+        error_message = _L("Failed to load calibration presets. Please check whether the selected printer, nozzle and print profiles are valid.");
+        BOOST_LOG_TRIVIAL(error) << "calib_retraction: null preset, print_prest=" << calib_info.print_prest
+                                 << " printer_prest=" << calib_info.printer_prest
+                                 << " filament_prest=" << calib_info.filament_prest;
+        return;
+    }
 
     DynamicPrintConfig print_config    = calib_info.print_prest->config;
     DynamicPrintConfig filament_config = calib_info.filament_prest->config;

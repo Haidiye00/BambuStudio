@@ -88,6 +88,12 @@ namespace
         return output;
     }
 
+    // Minimum extrusion segment length (mm) considered for the volumetric flow rate range.
+    // mm3_per_mm is reverse-computed as A_filament * (dE / dL) from quantized G-code values, so the
+    // relative error grows ~ (q_L/2)/dL. With 3-decimal X/Y output (q_L = 1e-3 mm), keeping the length
+    // term near 1% gives dL >= 0.0005 / 0.01 = 0.05 mm (the 5-decimal dE term adds a few tenths %).
+    // Shorter segments are noise-dominated and would inflate the legend max; scale if X/Y precision changes.
+    static constexpr float VOLUMETRIC_RATE_MIN_SEGMENT_LEN = 0.05f;
     // Round to a bin with minimum two digits resolution.
             // Equivalent to conversion to string with sprintf(buf, "%.2g", value) and conversion back to float, but faster.
     static float round_to_bin(const float value)
@@ -769,6 +775,8 @@ namespace Slic3r
                 ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, ImVec4(0.42f, 0.42f, 0.42f, 1.00f));
                 ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered, ImVec4(0.93f, 0.93f, 0.93f, 1.00f));
                 ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabActive, ImVec4(0.93f, 0.93f, 0.93f, 1.00f));
+                ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(69.0f / 255.0f, 69.0f / 255.0f, 67.0f / 255.0f, 0.94f));
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
                 ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(340.f * m_scale * imgui.scaled(1.0f / 15.0f), 0));
                 ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), 0, ImVec2(0.5f, 0.5f));
                 ImGui::Begin(_L("Statistics of All Plates").c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
@@ -1144,7 +1152,7 @@ namespace Slic3r
                     }
                 }
                 ImGui::End();
-                ImGui::PopStyleColor(6);
+                ImGui::PopStyleColor(8);
                 ImGui::PopStyleVar(3);
                 return;
             }
@@ -1286,8 +1294,13 @@ namespace Slic3r
                             m_p_extrusions->ranges.fan_speed.update_from(curr.fan_speed);
                             m_p_extrusions->ranges.additional_fan_speed.update_from(curr.additional_fan_speed);
                             m_p_extrusions->ranges.temperature.update_from(curr.temperature);
-                            if (curr.extrusion_role != erCustom || is_extrusion_role_visible(ExtrusionRole::erCustom))
-                                m_p_extrusions->ranges.volumetric_rate.update_from(round_to_bin(curr.volumetric_rate()));
+                            if (curr.extrusion_role != erCustom || is_extrusion_role_visible(ExtrusionRole::erCustom)) {
+                                // Skip sub-resolution segments: their mm3_per_mm is noise-dominated (see
+                                // VOLUMETRIC_RATE_MIN_SEGMENT_LEN) and would inflate the legend max.
+                                const float seg_len = (curr.position - gcode_result.moves[i - 1].position).norm();
+                                if (seg_len >= VOLUMETRIC_RATE_MIN_SEGMENT_LEN)
+                                    m_p_extrusions->ranges.volumetric_rate.update_from(round_to_bin(curr.volumetric_rate()));
+                            }
                             if (curr.layer_duration > 0.f) {
                                 m_p_extrusions->ranges.layer_duration.update_from(curr.layer_duration);
                             }
@@ -2954,15 +2967,15 @@ namespace Slic3r
                         imgui.text(_u8L("Current grouping of slice result is not optimal."));
                         wxString tip;
                         if (delta_weight_to_best >= 0 && delta_change_to_best >= 0)
-                            tip = from_u8((boost::format(_u8L("Increase %1%g filament and %2% changes compared to optimal grouping."))
+                            tip = from_u8((boost::format(_u8L("Increase %1%g filament and %2% nozzle purges compared to optimal grouping."))
                                 % number_format(delta_weight_to_best)
                                 % delta_change_to_best).str());
                         else if (delta_weight_to_best >= 0 && delta_change_to_best < 0)
-                            tip = from_u8((boost::format(_u8L("Increase %1%g filament and save %2% changes compared to optimal grouping."))
+                            tip = from_u8((boost::format(_u8L("Increase %1%g filament and save %2% nozzle purges compared to optimal grouping."))
                                 % number_format(delta_weight_to_best)
                                 % std::abs(delta_change_to_best)).str());
                         else if (delta_weight_to_best < 0 && delta_change_to_best >= 0)
-                            tip = from_u8((boost::format(_u8L("Save %1%g filament and increase %2% changes compared to optimal grouping."))
+                            tip = from_u8((boost::format(_u8L("Save %1%g filament and increase %2% nozzle purges compared to optimal grouping."))
                                 % number_format(std::abs(delta_weight_to_best))
                                 % delta_change_to_best).str());
                         imgui.text_wrapped(tip, parent_width);
@@ -2973,15 +2986,15 @@ namespace Slic3r
                         ImGui::PushStyleColor(ImGuiCol_Text, color);
                         wxString tip;
                         if (delta_weight_to_single_ext >= 0 && delta_change_to_single_ext >= 0)
-                            tip = from_u8((boost::format(_u8L("Save %1%g filament and %2% changes compared to a printer with one nozzle."))
+                            tip = from_u8((boost::format(_u8L("Save %1%g filament and %2% nozzle purges compared to a printer with one nozzle."))
                                 % number_format(delta_weight_to_single_ext)
                                 % delta_change_to_single_ext).str());
                         else if (delta_weight_to_single_ext >= 0 && delta_change_to_single_ext < 0)
-                            tip = from_u8((boost::format(_u8L("Save %1%g filament and increase %2% changes compared to a printer with one nozzle."))
+                            tip = from_u8((boost::format(_u8L("Save %1%g filament and increase %2% nozzle purges compared to a printer with one nozzle."))
                                 % number_format(delta_weight_to_single_ext)
                                 % std::abs(delta_change_to_single_ext)).str());
                         else if (delta_weight_to_single_ext < 0 && delta_change_to_single_ext >= 0)
-                            tip = from_u8((boost::format(_u8L("Increase %1%g filament and save %2% changes compared to a printer with one nozzle."))
+                            tip = from_u8((boost::format(_u8L("Increase %1%g filament and save %2% nozzle purges compared to a printer with one nozzle."))
                                 % number_format(std::abs(delta_weight_to_single_ext))
                                 % delta_change_to_single_ext).str());
                         imgui.text_wrapped(tip, parent_width);

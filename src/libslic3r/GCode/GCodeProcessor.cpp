@@ -1499,6 +1499,7 @@ void GCodeProcessorResult::reset() {
     //BBS: add label_object_enabled
     label_object_enabled = false;
     timelapse_warning_code = 0;
+    support_traditional_timelapse = true;
     printable_height = 0.0f;
     settings_ids.reset();
     extruders_count = 0;
@@ -1531,6 +1532,7 @@ void GCodeProcessorResult::reset() {
     label_object_enabled = false;
     long_retraction_when_cut = false;
     timelapse_warning_code = 0;
+    support_traditional_timelapse = true;
     printable_height = 0.0f;
     settings_ids.reset();
     filaments_count = 0;
@@ -6286,21 +6288,6 @@ void GCodeProcessor::update_slice_warnings()
     auto used_filaments = get_used_filaments();
     assert(!used_filaments.empty());
     GCodeProcessorResult::SliceWarning warning;
-    warning.level = 1;
-    if (m_highest_bed_temp != 0) {
-        for (size_t i = 0; i < used_filaments.size(); i++) {
-            int temperature = get_filament_vitrification_temperature(used_filaments[i]);
-            if (temperature != 0 && m_highest_bed_temp >= temperature)
-                warning.params.push_back(std::to_string(used_filaments[i]));
-        }
-    }
-
-    if (!warning.params.empty()) {
-        warning.level       = 3;
-        warning.msg         = BED_TEMP_TOO_HIGH_THAN_FILAMENT;
-        warning.error_code  = "1000C001";
-        m_result.warnings.push_back(warning);
-    }
 
     //bbs:HRC checker // remove the checker
     //warning.params.clear();

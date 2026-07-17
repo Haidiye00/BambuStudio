@@ -65,11 +65,13 @@ void DevAmsTray::reset()
     nozzle_temp_min     = "";
     xcam_info           = "";
     uuid                = "";
+    tray_id_name        = "";
     k                   = 0.0f;
     n                   = 0.0f;
     is_bbl              = false;
     hold_count          = 0;
     remain              = 0;
+    remain_g            = -1;
 }
 
 
@@ -114,6 +116,15 @@ std::optional<Slic3r::DevFilamentDryingPreset> DevAmsTray::get_ams_drying_preset
 
 std::optional<int> DevAmsTray::get_filament_remain_weight() const
 {
+    // Prefer the accurate per-gram value reported by firmware; -1 means not edited/not provided.
+    if (remain_g >= 0) {
+        return remain_g > 0 ? std::optional<int>(remain_g) : std::nullopt;
+    }
+
+    if (weight.empty()) {
+        return std::nullopt;
+    }
+
     std::optional<int> weight_int;
     try {
         weight_int = stoi(weight) * remain / 100;
@@ -579,6 +590,7 @@ DevAms* DevFilaSystemParser::ParseAmsInfo(const json& j_ams, MachineObject* obj,
     std::set<int> binded_extruder_set;
     std::optional<DevFilaSwitch::SwitchPos> binded_switcher_pos;
     auto type_id = DevAmsType::AMS; // 0:dummy 1:ams 2:ams-lite 3:n3f 4:n3s
+    auto remain_estimate_version = DevAms::RemainEstimateVersion::Legacy;
 
     /*ams info*/
     if (j_ams.contains("info")) {
@@ -601,6 +613,8 @@ DevAms* DevFilaSystemParser::ParseAmsInfo(const json& j_ams, MachineObject* obj,
         } else{
             binded_extruder_set = { extuder_id };
         }
+
+        remain_estimate_version = static_cast<DevAms::RemainEstimateVersion>(DevUtil::get_flag_bits(info, 30, 2));
     } else {
         binded_extruder_set = { MAIN_EXTRUDER_ID }; // Default extruder id
         if (!obj->is_enable_ams_np && obj->get_printer_ams_type() == "f1") {
@@ -633,6 +647,7 @@ DevAms* DevFilaSystemParser::ParseAmsInfo(const json& j_ams, MachineObject* obj,
 
     curr_ams->m_binded_switcher_pos = binded_switcher_pos;
     curr_ams->m_binded_extruder_set = binded_extruder_set;
+    curr_ams->m_remain_estimate_version = remain_estimate_version;
 
     /*set ams exist flag*/
     try {
@@ -785,7 +800,9 @@ DevAmsTray* DevFilaSystemParser::ParseAmsTrayInfo(const json& j_tray, MachineObj
     DevJsonValParser::ParseVal(j_tray, "nozzle_temp_min", curr_tray->nozzle_temp_min);
     DevJsonValParser::ParseVal(j_tray, "xcam_info", curr_tray->xcam_info);
     DevJsonValParser::ParseVal(j_tray, "tray_uuid", curr_tray->uuid, std::string("0"));
+    DevJsonValParser::ParseVal(j_tray, "tray_id_name", curr_tray->tray_id_name);
     DevJsonValParser::ParseVal(j_tray, "remain", curr_tray->remain, -1);
+    DevJsonValParser::ParseVal(j_tray, "remain_g", curr_tray->remain_g, -1);
     DevJsonValParser::ParseVal(j_tray, "setting_id", curr_tray->filament_setting_id);
 
     {

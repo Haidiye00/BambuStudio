@@ -57,6 +57,11 @@ std::string normalize_ams_hex_for_web(const std::string& raw)
     return hex;
 }
 
+std::string normalize_ams_rfid_for_web(const std::string& tray_uuid, const std::string& tag_uid)
+{
+    return tag_uid.size() == 16 && tag_uid.substr(12, 2) == "01" ? tray_uuid : std::string();
+}
+
 } // namespace
 
 FilamentManagerVM::FilamentManagerVM()
@@ -158,6 +163,12 @@ void FilamentManagerVM::ReportState(const std::string& submod, const std::string
     if (submod == "spool") {
         nlohmann::json body = MakeResp("spool", "list", 0, "", build_spool_list());
         m_bridge->ReportMsg(body);
+        return;
+    }
+
+    // Push login / cloud-sync state on login/logout (NotifyFilamentSessionState).
+    if (submod == "sync") {
+        publish_sync_state();
         return;
     }
 
@@ -385,7 +396,7 @@ nlohmann::json FilamentManagerVM::HandleSpool(const std::string& action, const n
                 FilamentSpool u = *sp;
                 u.status = "empty"; u.remain_percent = 0;
                 u.cloud_synced = false;
-                store->update_spool(u); store->save();
+                store->update_spool(u);
                 sid = u.spool_id;
                 publish_debug_log("data", "info", "Spool marked empty",
                                   "A spool was marked empty in the local store",
@@ -406,7 +417,7 @@ nlohmann::json FilamentManagerVM::HandleSpool(const std::string& action, const n
                 FilamentSpool u = *sp;
                 u.favorite = !u.favorite;
                 u.cloud_synced = false;
-                store->update_spool(u); store->save();
+                store->update_spool(u);
                 sid = u.spool_id;
                 publish_debug_log("data", "info", "Spool favorite toggled",
                                   "A spool favorite flag changed in the local store",
@@ -426,7 +437,7 @@ nlohmann::json FilamentManagerVM::HandleSpool(const std::string& action, const n
                 FilamentSpool u = *sp;
                 u.status = "archived";
                 u.cloud_synced = false;
-                store->update_spool(u); store->save();
+                store->update_spool(u);
                 sid = u.spool_id;
                 publish_debug_log("data", "info", "Spool archived",
                                   "A spool was archived in the local store",
@@ -634,7 +645,7 @@ nlohmann::json FilamentManagerVM::HandleColors(const std::string& action, const 
             nlohmann::json hex_arr = nlohmann::json::array();
             for (const auto& c : fc.m_colors) {
                 hex_arr.push_back(
-                    wxString::Format("#%02X%02X%02X", c.Red(), c.Green(), c.Blue()).utf8_string());
+                    wxString::Format("#%02X%02X%02X%02X", c.Red(), c.Green(), c.Blue(), c.Alpha()).utf8_string());
             }
             item["colors"] = hex_arr;
             arr.push_back(item);
@@ -939,9 +950,14 @@ nlohmann::json FilamentManagerVM::build_ams_data()
                     for (auto& [slot_id, tray] : ams->GetTrays()) {
                         nlohmann::json t;
                         t["slot_id"]   = slot_id;
+                        {
+                            int tray_id = std::stoi(ams_id) * 4 + std::stoi(slot_id);
+                            t["tray_label"] = wxGetApp().transition_tridid(tray_id).ToStdString();
+                        }
                         t["is_exists"] = tray && tray->is_exists;
                         if (tray && tray->is_exists) {
-                            t["tag_uid"]    = tray->tag_uid;
+                            t["tag_uid"]    = normalize_ams_rfid_for_web(tray->uuid, tray->tag_uid);
+                            t["tray_id_name"] = tray->tray_id_name;
                             t["setting_id"] = tray->setting_id;
                             t["fila_type"]  = tray->m_fila_type;
                             t["sub_brands"] = tray->sub_brands;
@@ -949,6 +965,12 @@ nlohmann::json FilamentManagerVM::build_ams_data()
                             t["color"]    = color;
                             t["weight"]   = tray->weight;
                             t["remain"]   = tray->remain;
+                            t["remain_g"] = tray->remain_g;
+                            if (auto rw = tray->get_filament_remain_weight()) {
+                                t["remain_weight"] = *rw;
+                            } else {
+                                t["remain_weight"] = nullptr;
+                            }
                             t["diameter"] = tray->diameter;
                             t["is_bbl"]   = tray->is_bbl;
                             nlohmann::json colors = nlohmann::json::array();
@@ -964,14 +986,14 @@ nlohmann::json FilamentManagerVM::build_ams_data()
 
                             if (!tray->setting_id.empty() && !colors.empty()) {
                                 if (auto* clr_query = wxGetApp().get_filament_color_code_query()) {
-                                    FilamentColor fc;
+                                    std::vector<wxString> hex_colors;
                                     for (const auto& c : colors) {
                                         if (c.is_string()) {
-                                            fc.m_colors.emplace(wxColour(wxString::FromUTF8(c.get<std::string>())));
+                                            hex_colors.emplace_back(wxString::FromUTF8(c.get<std::string>()));
                                         }
                                     }
-                                    fc.m_color_type = to_filament_color_type(color_type, colors.size());
-                                    if (auto* color_info = clr_query->GetFilaInfo(wxString::FromUTF8(tray->setting_id), fc)) {
+                                    if (auto* color_info = clr_query->GetFilaInfo(
+                                            wxString::FromUTF8(tray->setting_id), hex_colors, color_type)) {
                                         t["color_name"]      = color_info->GetFilaColorName().utf8_string();
                                         t["fila_color_code"] = color_info->GetFilaColorCode().utf8_string();
                                     }

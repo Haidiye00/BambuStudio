@@ -296,7 +296,13 @@ public:
     EMode get_mode() const { return m_mode; }
     void  set_mode(EMode mode);
 
-    int query_real_volume_idx_from_other_view(unsigned int object_idx, unsigned int instance_idx, unsigned int model_volume_idx);
+    // Cross-model selection mapping by stable part GUID (prepare <-> assembly independent models).
+    // Returns the first GLVolume in this selection's model whose backing ModelVolume matches part_guid
+    // (either its own part_guid or its assembly_src_guid). instance_idx picks the matching instance.
+    int query_real_volume_idx_by_part_guid(const std::string& part_guid, unsigned int instance_idx = 0);
+    // Map a GLVolume in source_model to a GLVolume index in this selection's model by stable part_guid.
+    // use_assembly_src_guid: true for assembly->prepare (prefer assembly_src_guid); false for prepare->assembly (part_guid only).
+    int query_real_volume_idx_from_other_model_volume(const GLVolume* source_volume, const Model& source_model, bool use_assembly_src_guid);
     void add(unsigned int volume_idx, bool as_single_selection = true, bool check_for_already_contained = false);
     void remove(unsigned int volume_idx);
 
@@ -436,9 +442,11 @@ public:
     void rotate(unsigned int object_idx, unsigned int instance_idx, unsigned int volume_idx, const Transform3d &overwrite_tran);
     //BBS: add partplate related logic
     void notify_instance_update(int object_idx, int instance_idx);
+    // Public escape hatch: invalidate the cached selection bounding boxes
+    void mark_bounding_boxes_dirty() { set_bounding_boxes_dirty(); }
     // BBS
     EMode get_volume_selection_mode(){ return m_volume_selection_mode;}
-    void set_volume_selection_mode(EMode mode) { if (!m_volume_selection_locked) m_volume_selection_mode = mode; }
+    void  set_volume_selection_mode(EMode mode);
     void lock_volume_selection_mode() { m_volume_selection_locked = true; }
     void unlock_volume_selection_mode() { m_volume_selection_locked = false; }
 

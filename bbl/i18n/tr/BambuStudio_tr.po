@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-01 09:40+0800\n"
+"POT-Creation-Date: 2026-07-14 20:35+0800\n"
 "PO-Revision-Date: 2025-10-16 12:27+0300\n"
 "Last-Translator: Fatih AYDIN <fatihaydin5228@gmail.com>\n"
 "Language-Team: \n"
@@ -285,6 +285,9 @@ msgid "Standard"
 msgstr "Standart"
 
 msgid "TPU High Flow"
+msgstr ""
+
+msgid "E3D High Flow"
 msgstr ""
 
 msgid "Unknown"
@@ -1085,7 +1088,7 @@ msgstr "konektörler kesim konturunun dışında"
 msgid "connector is out of object"
 msgstr "konektör nesnenin dışında"
 
-msgid "connectors is out of object"
+msgid "connectors are out of object"
 msgstr "konektörler nesne dışı"
 
 msgid "Some connectors are overlapped"
@@ -1273,13 +1276,13 @@ msgstr ""
 "Özellik 1 sıfırlandı,\n"
 "özellik 2, özellik 1 olmuştur"
 
-msgid "Warning:please select Plane's feature."
+msgid "Warning: Please select a Plane feature."
 msgstr "Uyarı: Lütfen Düzlemin özelliğini seçin."
 
-msgid "Warning:please select Point's or Circle's feature."
+msgid "Warning: Please select a Point or Circle feature."
 msgstr "Uyarı: Lütfen Nokta'nın veya Daire'nin özelliğini seçin."
 
-msgid "Warning:please select two different mesh."
+msgid "Warning: Please select two different meshes."
 msgstr "Uyarı: Lütfen farklı iki ağ yüzeyi seçin."
 
 msgid "Copy to clipboard"
@@ -1333,6 +1336,9 @@ msgstr "Lütfen en az iki hacmi seçin."
 msgid "(Moving)"
 msgstr "(Hareket ediliyor)"
 
+msgid "Face and face assembly"
+msgstr "Yüz ve yüz montajı"
+
 msgid "Point and point assembly"
 msgstr "Nokta ve nokta montajı"
 
@@ -1344,9 +1350,6 @@ msgstr ""
 "Önce nesnelerin monte edilmesi tavsiye edilir,\n"
 "çünkü nesneler yatakla sınırlandırılmıştır\n"
 "ve sadece parçalar kaldırılabilir."
-
-msgid "Face and face assembly"
-msgstr "Yüz ve yüz montajı"
 
 msgid "Brush size"
 msgstr "Fırça boyutu"
@@ -1528,31 +1531,31 @@ msgstr ""
 msgid "Text Gap"
 msgstr "Metin Boşluğu"
 
-msgid "Warning:There is a mirror in the text matrix, and dragging it will completely regenerate it."
+msgid "Warning: There is a mirror in the text matrix, and dragging it will completely regenerate it."
 msgstr "Uyarı:Metin matrisinde bir ayna (yansıma) bulunuyor; sürükleme işlemi, matrisi tamamen yeniden oluşturacaktır."
 
-msgid "Warning:Due to font upgrades,previous font may not necessarily be replaced successfully, and recommend you to modify the font."
+msgid "Warning: Due to font upgrades, previous font may not necessarily be replaced successfully. Please modify the font."
 msgstr "Uyarı: Yazı tipi yükseltmeleri nedeniyle, önceki yazı tipi başarıyla değiştirilemeyebilir ve yazı tipini değiştirmenizi öneririz."
 
-msgid "Warning:create text fail."
+msgid "Warning: Text creation failed."
 msgstr "Uyarı:metin oluşturma başarısız."
 
-msgid "Warning:text normal is error."
+msgid "Warning: Text normal has an error."
 msgstr "Uyarı:normal metin hatalıdır."
 
-msgid "Warning:text normal has been reset."
+msgid "Warning: Text normal has been reset."
 msgstr "Uyarı:normal metin sıfırlandı."
 
-msgid "Warning:current text spacing is not very reasonable. If you continue editing, a more reasonable text spacing will be generated."
+msgid "Warning: Current text spacing is not optimal. If you continue editing, a more reasonable text spacing will be generated."
 msgstr "Uyarı: mevcut metin aralığı çok uygun değildir. Düzenlemeye devam ederseniz, daha uygun bir metin aralığı oluşturulacaktır."
 
-msgid "Warning:old matrix has at least two parameters: mirroring, scaling, and rotation. If you continue editing, it may not be correct. Please dragging text or cancel using current pose, save and reedit again."
-msgstr "Uyarı:eski matrisin en az iki parametresi vardır: yansıtma, ölçekleme ve döndürme. Düzenlemeye devam ederseniz, doğru olmayabilir. Lütfen metni sürükleyin veya mevcut pozu kullanarak iptal edin, kaydedin ve yeniden düzenleyin."
+msgid "Warning: Old matrix has at least two parameters: mirroring, scaling, and rotation. If you continue editing, it may not be correct. Please drag the text or cancel the current pose, save and reedit again."
+msgstr ""
 
-msgid "Error:Detecting an incorrect mesh id or an unknown error, regenerating text may result in incorrect outcomes.Please drag text,save it then reedit it again."
+msgid "Error: Detecting an incorrect mesh id or an unknown error, regenerating text may result in incorrect outcomes. Please drag text, save it then reedit it again."
 msgstr "Hata: Yanlış bir ağ kimliği veya bilinmeyen bir hata algılandığında, metnin yeniden oluşturulması yanlış sonuçlara neden olabilir, lütfen metni sürükleyin, kaydedin ve tekrar düzenleyin."
 
-msgid "Warning:Due to functional upgrade, rotation information cannot be restored. Please drag or modify text,save it and reedit it will ok."
+msgid "Warning: Due to functional upgrade, rotation information cannot be restored. Please drag or modify text, save it and reedit it to fix the issue."
 msgstr "Uyarı: İşlevsel yükseltme nedeniyle döndürme bilgileri geri yüklenemez. Lütfen metni sürükleyin veya değiştirin, kaydedin ve yeniden düzenleyin."
 
 msgid "Detected that text did not adhere to mesh surface. Please manually drag yellow square to mesh surface that needs to be adhered."
@@ -1770,7 +1773,7 @@ msgstr "Kabartmalı şekilde eksik svg dosyası"
 msgid "Missing data of svg file"
 msgstr "Svg dosyasının eksik verileri"
 
-msgid "Tip:If you want to place svg file on another part surface,you should select part first, and then drag svg file to the part surface."
+msgid "Tip: If you want to place an SVG file on another part surface, select the part first, then drag the SVG file to the part surface."
 msgstr ""
 "İpucu: svg dosyasını başka bir parça yüzeyine yerleştirmek istiyorsanız,\n"
 "önce parçayı seçmeli ve ardından svg dosyasını parça yüzeyine sürüklemelisiniz."
@@ -1944,6 +1947,15 @@ msgstr "Yanlış parola"
 #, c-format, boost-format
 msgid "Connect %s failed! [SN:%s, code=%s]"
 msgstr "%s bağlantısı başarısız oldu! [SN:%s, kod=%s]"
+
+msgid ""
+"This operation rebuilds the model's mesh. Painted color, supports, seam and fuzzy-skin will be transferred to the new mesh by a best-effort approximation, so the result may be slightly off and, in rare cases, some painting may be lost.\n"
+"\n"
+"Do you want to continue?"
+msgstr ""
+
+msgid "Painting may change"
+msgstr ""
 
 msgid "BambuStudio configuration file read failed. Please manually backup and delete it, and then restart BambuStudio software."
 msgstr "BambuStudio yapılandırma dosyası okuma başarısız oldu. Lütfen manuel olarak yedekleyin ve silin ve ardından BambuStudio yazılımını yeniden başlatın."
@@ -2190,11 +2202,14 @@ msgstr "SVG değiştirici ekle"
 msgid "Select settings"
 msgstr "Ayarları şeç"
 
-msgid "Hide"
-msgstr "Gizle"
+msgid "Add to New Step"
+msgstr ""
 
-msgid "Show"
-msgstr "Göster"
+msgid "Add to Current Step"
+msgstr ""
+
+msgid "Add to Existing Step"
+msgstr ""
 
 msgid "Delete the selected object"
 msgstr "Seçilen nesneyi sil"
@@ -2437,6 +2452,9 @@ msgstr "Düzenle"
 msgid "Delete this filament"
 msgstr "Bu filamenti sil"
 
+msgid "Decompose Color"
+msgstr ""
+
 msgid "Merge with"
 msgstr "Birleştir"
 
@@ -2483,6 +2501,12 @@ msgid "Remove the selected plate"
 msgstr "Seçilen plakayı kaldır"
 
 msgid "Move Plate"
+msgstr ""
+
+msgid "Split to objects"
+msgstr "Nesnelere böl"
+
+msgid "Split the selected objects into multiple objects"
 msgstr ""
 
 msgid "Clone"
@@ -2953,8 +2977,8 @@ msgstr ""
 msgid "Choose an AMS slot then press \"Load\" or \"Unload\" button to automatically load or unload filaments."
 msgstr "Bir AMS yuvası seçin ve ardından filamentleri otomatik olarak yüklemek veya çıkartmak için \"Yükle\" veya \"Çıkart\" düğmesine basın."
 
-msgid "Filament type is unknown which is required to perform this action. Please set target filament's informations."
-msgstr "Bu eylemi gerçekleştirmek için gerekli olan filament tipi bilinmiyor. Lütfen hedef filamentin bilgilerini ayarlayın."
+msgid "Filament type is unknown which is required to perform this action. Please set target filament's information."
+msgstr ""
 
 msgid "/"
 msgstr "/"
@@ -3127,6 +3151,460 @@ msgstr "Maksimum sıcaklık aşağıdakileri aşamaz "
 msgid "The minmum temperature should not be less than "
 msgstr "Minimum sıcaklık aşağıdakilerden az olmamalıdır "
 
+msgid "Export file Settings"
+msgstr ""
+
+msgid "Homepage  title"
+msgstr ""
+
+msgid "For privacy reasons, image paths are not saved or restored.Just for pdf/md file."
+msgstr ""
+
+msgid "Homepage image"
+msgstr ""
+
+msgid "Second page image"
+msgstr ""
+
+msgid "Browse"
+msgstr "Aç"
+
+msgid "Image files"
+msgstr ""
+
+msgid "All files"
+msgstr ""
+
+msgid "Open image file"
+msgstr ""
+
+msgid "Step"
+msgstr "Adım"
+
+msgid "Install parts"
+msgstr ""
+
+msgid "Apply the final assembly pose to the objects or parts added in the current step?"
+msgstr ""
+
+msgid "Apply final assembly pose"
+msgstr ""
+
+msgid "The export file is in use by the system. Please close it or export with a different file name, then try again."
+msgstr ""
+
+msgid "Export"
+msgstr "Dışa Aktar"
+
+msgid "Assembly Guide"
+msgstr "Montaj Kılavuzu"
+
+msgid "PDF files"
+msgstr ""
+
+msgid "Markdown files"
+msgstr ""
+
+msgid "MP4 files"
+msgstr ""
+
+msgid "Export Assembly Guide to PDF"
+msgstr ""
+
+msgid "Export Assembly Guide to Markdown"
+msgstr ""
+
+msgid "Export Assembly Guide to MP4"
+msgstr ""
+
+msgid "Exporting file"
+msgstr ""
+
+msgid "Saving project will automatically switch to end frame"
+msgstr ""
+
+msgid "Are you sure you want to delete all assembly steps?"
+msgstr ""
+
+msgid "Delete all steps"
+msgstr ""
+
+msgid "New Step"
+msgstr ""
+
+msgid "Final assembly"
+msgstr ""
+
+msgid "end frame"
+msgstr ""
+
+msgid "Assembly Structure"
+msgstr ""
+
+msgid "Start your assembly journey from Add Step"
+msgstr ""
+
+msgctxt "AssemblyStructure"
+msgid "Default"
+msgstr ""
+
+msgid "Contain"
+msgstr ""
+
+msgid "Assembly Module"
+msgstr ""
+
+msgid "Volume"
+msgstr ""
+
+msgid "Click to add objects to the current step"
+msgstr ""
+
+msgid "_copy"
+msgstr ""
+
+msgid "Are you sure you want to delete the current step?"
+msgstr ""
+
+msgid "Delete step"
+msgstr ""
+
+msgid "Model"
+msgstr "Model"
+
+msgid "start frame"
+msgstr ""
+
+msgid "transition frame"
+msgstr ""
+
+#, c-format, boost-format
+msgid "Step %d"
+msgstr ""
+
+msgid "not used in any assembly step"
+msgstr ""
+
+#, boost-format
+msgid "Plate %1%"
+msgstr ""
+
+msgid "Assembly Step"
+msgstr ""
+
+msgid "Start frame"
+msgstr ""
+
+msgid "End frame"
+msgstr ""
+
+msgid "Transition frame"
+msgstr ""
+
+msgid "Frame"
+msgstr ""
+
+msgid "step"
+msgstr ""
+
+msgid "Show Current Step Parts Only"
+msgstr ""
+
+msgid "X-Ray Other Parts"
+msgstr ""
+
+msgid "Play all frames for all steps."
+msgstr ""
+
+msgid "Toggle playback speed."
+msgstr ""
+
+msgid "Play previous frame."
+msgstr ""
+
+msgid "Play next frame."
+msgstr ""
+
+msgid "Display Mode"
+msgstr ""
+
+msgid "Set export file parameters"
+msgstr ""
+
+msgid "Camera margin factor for the current frame. The larger the value, the more margin."
+msgstr ""
+
+msgid "Modify camera margin"
+msgstr ""
+
+msgid "Edit step name"
+msgstr ""
+
+msgid "Insert step before"
+msgstr ""
+
+msgid "Insert step after"
+msgstr ""
+
+msgid "Tip"
+msgstr "İpucu"
+
+msgid "No step card is currently selected. Pose-changing operations such as move gizmo will affect the actual final-assembly view."
+msgstr ""
+
+msgid "Expand"
+msgstr ""
+
+msgid "Collapse"
+msgstr "Daralt"
+
+msgid "Options"
+msgstr "Seçenekler"
+
+msgid "Go to Wiki"
+msgstr ""
+
+msgid "Copy current step"
+msgstr ""
+
+msgid "Delete current step"
+msgstr ""
+
+msgid "Add some objects to current step"
+msgstr ""
+
+msgid "Copy Step"
+msgstr ""
+
+msgid "Add Step"
+msgstr ""
+
+#, boost-format
+msgid "No more than %1% steps are allowed."
+msgstr ""
+
+msgid "Only copy steps. This is independent of the selected objects on the canvas."
+msgstr ""
+
+msgid "Only add empty steps. This has nothing to do with the selected objects on the canvas."
+msgstr ""
+
+msgid "Delete all assembly steps except the final assembly."
+msgstr ""
+
+msgid "Exit the assembly step editing, you can also press the Esc button to exit"
+msgstr ""
+
+msgid "Click to add Cyber Brick"
+msgstr ""
+
+msgid "Delete this keyframe"
+msgstr ""
+
+msgid "Export PDF"
+msgstr ""
+
+msgid "Export Markdown"
+msgstr ""
+
+msgid "Export MP4"
+msgstr ""
+
+msgid "After exporting the Markdown document, you can edit it in third-party software such as Zettlr and then export it to PDF."
+msgstr ""
+
+msgid "Auto recommend"
+msgstr ""
+
+msgid "Model objects only"
+msgstr ""
+
+msgid "Model parts only"
+msgstr ""
+
+msgid "Automatically choose object-or-part-level labels: objects already shown in earlier steps are collapsed into a single object label, while the rest are labeled per individual part."
+msgstr ""
+
+msgid "Show one label per model object."
+msgstr ""
+
+msgid "Show one label per model part."
+msgstr ""
+
+msgid "Label"
+msgstr ""
+
+msgid "Label settings"
+msgstr ""
+
+msgid "Show Object/Part labels"
+msgstr ""
+
+msgid "Show object and part names  on models"
+msgstr ""
+
+msgid "Automatically select the optimal camera perspective and auto-arrange auto recommend labels each time the checkbox is re-ticked."
+msgstr ""
+
+msgid "Auto layout"
+msgstr ""
+
+msgid "Auto-arrange labels in current view"
+msgstr ""
+
+msgid "Current view labels"
+msgstr ""
+
+msgid "Label Settings"
+msgstr ""
+
+msgid "Font size"
+msgstr ""
+
+msgid "Display mode"
+msgstr ""
+
+msgid "Automatically choose object-or-part-level labels: a fully-used object already shown in earlier steps is collapsed into a single object label; partial objects and first appearances are labeled per individual part."
+msgstr ""
+
+msgid "Export assembly guide PDF, Markdown or MP4"
+msgstr ""
+
+msgid "Screw"
+msgstr ""
+
+msgid "Note"
+msgstr "Not"
+
+msgid "Pose changes (e.g. move gizmo) made on the final-assembly step's keyframe will affect the actual assembly display."
+msgstr ""
+
+msgid "Pose changes (e.g. move gizmo) made on this step's keyframe do not affect the actual assembly display."
+msgstr ""
+
+msgid "If necessary, a relatively good position can be restored by pressing the \"apply actual assembly pose\" button at present."
+msgstr ""
+
+msgid "undoing these edits is not yet supported and will be added in a later version."
+msgstr ""
+
+msgid "Some objects were used in an earlier keyframe of the current step and are not exploded here. You can explode them manually with the move tool."
+msgstr ""
+
+msgid "Connection Type"
+msgstr ""
+
+msgid "Clip"
+msgstr ""
+
+msgid "Glue"
+msgstr ""
+
+msgid "Add Clip"
+msgstr ""
+
+msgid "Add Glue"
+msgstr ""
+
+msgid "Add Screw"
+msgstr ""
+
+msgid "Add Notes"
+msgstr ""
+
+msgid "Add Rectangle"
+msgstr ""
+
+msgid "Add Circle"
+msgstr ""
+
+msgid "Add Arrow"
+msgstr ""
+
+msgid "Add Text"
+msgstr ""
+
+msgid "Text"
+msgstr "Metin"
+
+msgid "Background"
+msgstr ""
+
+msgid "Timeline"
+msgstr ""
+
+msgid "Play all frames for current step"
+msgstr ""
+
+msgid "At least two keyframes are required to play."
+msgstr ""
+
+msgid "Automatically explode all objects."
+msgstr ""
+
+msgid "Automatically explode all parts."
+msgstr ""
+
+msgid "Apply the final assembly pose to the currently selected object or part(if none is selected, apply it to all objects added in the current frame)"
+msgstr ""
+
+msgid "Apply current camera angle to all frames of the current step"
+msgstr ""
+
+msgid "Add keyframe"
+msgstr ""
+
+msgid "Click to select this frame"
+msgstr ""
+
+msgid "Save update"
+msgstr ""
+
+msgid "Save current frame"
+msgstr ""
+
+msgid "Assembly tree"
+msgstr ""
+
+msgid "Search"
+msgstr "Ara"
+
+msgid "List"
+msgstr ""
+
+msgid "Assembly list"
+msgstr ""
+
+msgid "Expand all objects"
+msgstr ""
+
+msgid "Collapse all objects"
+msgstr ""
+
+msgid "Select all parts in a step"
+msgstr ""
+
+msgid "Red"
+msgstr ""
+
+msgid "Orange"
+msgstr ""
+
+msgid "Green"
+msgstr ""
+
+msgid "Blue"
+msgstr ""
+
+msgid "Black"
+msgstr ""
+
+msgid "Grey"
+msgstr ""
+
+msgid "White"
+msgstr ""
+
 msgid ""
 "All the selected objects are on the locked plate,\n"
 "We can not do auto-arrange on these objects."
@@ -3218,9 +3696,6 @@ msgstr "Metin projeksiyonu için geçerli bir yüzey yok."
 msgid "Text mesh ie empty."
 msgstr "Metin ağı boş."
 
-msgid "Text"
-msgstr "Metin"
-
 msgid "Error! Unable to create thread!"
 msgstr "Hata! İş parçacığı oluşturulamıyor!"
 
@@ -3310,13 +3785,25 @@ msgstr "Isıtmalı yatağın termal ön koşullandırması, ilk katman baskı ka
 msgid "Remaining time: %dmin%ds"
 msgstr "Kalan süre: %dmin%ds"
 
-msgid "Project Filaments"
-msgstr "Proje Filamentleri"
-
-msgid "New Filaments"
+msgid "One-click CMYW auto-mix"
 msgstr ""
 
-msgid "Add Material"
+msgid "One-click RYBW auto-mix"
+msgstr ""
+
+msgid "Project Physical Filaments"
+msgstr ""
+
+msgid "Project Mixed Filaments"
+msgstr ""
+
+msgid "New Physical Filaments"
+msgstr ""
+
+msgid "New Mixed Filaments"
+msgstr ""
+
+msgid "+ Add Material"
 msgstr ""
 
 #, c-format, boost-format
@@ -3354,6 +3841,12 @@ msgid "Reminder: parameters changed, click Apply to take effect"
 msgstr ""
 
 msgid "Filament Mapping"
+msgstr ""
+
+msgid "Reset filament mapping to the state before one-click mixing"
+msgstr ""
+
+msgid "Choose the one-click auto-mix mode for texture color import"
 msgstr ""
 
 msgid "Auto-merge same filament"
@@ -3571,6 +4064,42 @@ msgstr "Lütfen geçerli bir değer girin (K %.1f~%.1f içinde)"
 msgid "Please input a valid value (K in %.1f~%.1f, N in %.1f~%.1f)"
 msgstr "Lütfen geçerli bir değer girin (K %.1f~%.1f içinde, N %.1f~%.1f içinde)"
 
+msgid "Remark"
+msgstr ""
+
+msgid "Other"
+msgstr "Diğer"
+
+msgid "Filament Manager"
+msgstr ""
+
+msgid "In printer"
+msgstr ""
+
+#, c-format, boost-format
+msgid "In printer: %s"
+msgstr ""
+
+msgctxt "Filament Manager"
+msgid "Note"
+msgstr ""
+
+msgid "Unsupported Filaments"
+msgstr ""
+
+msgctxt "Unsupported Filaments"
+msgid "Note"
+msgstr ""
+
+msgid "No unsupported filaments"
+msgstr ""
+
+msgid "No filaments"
+msgstr ""
+
+msgid "System presets"
+msgstr "Sistem ön ayarları"
+
 #, c-format, boost-format
 msgid "Note: The hotend number on the %s is tied to the holder. When the hotend is moved to a new holder, its number will update automatically."
 msgstr ""
@@ -3590,6 +4119,24 @@ msgstr "Diğer renk"
 
 msgid "Custom Color"
 msgstr "Özel renk"
+
+msgid "AMS detected a new official filament. Add it to Filament Manager?"
+msgstr ""
+
+msgid "Add as new filament"
+msgstr ""
+
+msgid "Link to existing filament"
+msgstr ""
+
+msgid "Not now"
+msgstr ""
+
+msgid "Please select"
+msgstr ""
+
+msgid "No matching filament"
+msgstr ""
 
 msgid "Dynamic flow calibration"
 msgstr "Dinamik akış kalibrasyonu"
@@ -3646,9 +4193,6 @@ msgstr "%s, %s'yi desteklemiyor"
 
 msgid "Dynamic flow Calibration"
 msgstr "Dinamik akış kalibrasyonu"
-
-msgid "Step"
-msgstr "Adım"
 
 msgid "Unmapped"
 msgstr "Eşleşme kaldırıldı"
@@ -3834,7 +4378,7 @@ msgstr "Yeni bir filament yerleştirirken AMS, bilgileri otomatik olarak okumaz 
 msgid "Power on update"
 msgstr "Güncellemeyi aç"
 
-msgid "The AMS will automatically read the information of inserted filament on start-up. It will take about 1 minute.The reading process will roll filament spools."
+msgid "The AMS will automatically read the information of inserted filament on start-up. It will take about 1 minute. The reading process will roll filament spools."
 msgstr "AMS, başlangıçta takılan filamentin bilgilerini otomatik olarak okuyacaktır. Yaklaşık 1 dakika sürecektir. Okuma işlemi filament makaralarını saracaktır."
 
 msgid "The AMS will not automatically read information from inserted filament during startup and will continue to use the information recorded before the last shutdown."
@@ -3889,6 +4433,15 @@ msgstr ""
 
 msgid "File"
 msgstr "Dosya"
+
+msgid "Save Project"
+msgstr "Projeyi Kaydet"
+
+msgid "Undo"
+msgstr "Geri al"
+
+msgid "Redo"
+msgstr "İleri Al"
 
 msgid "Calibration"
 msgstr "Kalibrasyon"
@@ -4003,9 +4556,6 @@ msgstr "Kaldır"
 msgid "Not found:"
 msgstr "Bulunamadı:"
 
-msgid "Model"
-msgstr "Model"
-
 msgid "Choose an STL file to import bed shape from:"
 msgstr "Yatak şeklini içe aktarmak için bir STL dosyası seçin:"
 
@@ -4068,13 +4618,11 @@ msgstr ""
 
 msgid ""
 "Should not large than 100%.\n"
-"Reset to defualt"
+"Reset to default"
 msgstr ""
-"%100'den fazla olmamalıdır.\n"
-"Varsayılana sıfırla"
 
 #, c-format, boost-format
-msgid "Current chamber temperature is higher than the material's safe temperature,it may result in material softening and clogging.The maximum safe temperature for the material is %d"
+msgid "Current chamber temperature is higher than the material's safe temperature, it may result in material softening and clogging. The maximum safe temperature for the material is %d"
 msgstr "Mevcut hazne sıcaklığı malzemenin güvenli sıcaklığından yüksektir, malzemenin yumuşamasına ve tıkanmasına neden olabilir Malzeme için maksimum güvenli sıcaklık %d'dir"
 
 msgid ""
@@ -4381,10 +4929,10 @@ msgstr "Duraklat (ilk katman hatası)"
 msgid "Pause (nozzle clog)"
 msgstr "Duraklatma (nozul tıkanıklığı)"
 
-msgid "Measuring motion percision"
+msgid "Measuring motion precision"
 msgstr "Hareket hassasiyetinin ölçülmesi"
 
-msgid "Enhancing motion percision"
+msgid "Enhancing motion precision"
 msgstr "Hareket hassasiyetini artırma"
 
 msgid "Measure motion accuracy"
@@ -4530,7 +5078,7 @@ msgstr "AMS sıcaklığı çok yüksek, bu da filamentin yumuşamasına neden ol
 msgid "The current chamber temperature or the target chamber temperature exceeds 45℃.In order to avoid extruder clogging,low temperature filament(PLA/PETG/TPU) is not allowed to be loaded."
 msgstr "Mevcut hazne sıcaklığı veya hedef hazne sıcaklığı 45 ° C'yi aşıyor Ekstruder tıkanmasını önlemek için düşük sıcaklıkta filament (PLA / PETG / TPU) yüklenmesine izin verilmez."
 
-msgid "Low temperature filament(PLA/PETG/TPU) is loaded in the extruder.In order to avoid extruder clogging,it is not allowed to set the chamber temperature."
+msgid "Low temperature filament (PLA/PETG/TPU) is loaded in the extruder. In order to avoid extruder clogging, it is not allowed to set the chamber temperature."
 msgstr "Ekstrudere düşük sıcaklıkta filament (PLA / PETG / TPU) yüklendi. Ekstruder tıkanmasını önlemek için hazne sıcaklığının 45 ° C'nin üzerine ayarlanmasına izin verilmez."
 
 msgid "When you set the chamber temperature below 40℃, the chamber temperature control will not be activated. And the target chamber temperature will automatically be set to 0℃."
@@ -4824,9 +5372,6 @@ msgstr "Filament Değişiklikleri"
 msgid "Wipe"
 msgstr "Temizleme"
 
-msgid "Options"
-msgstr "Seçenekler"
-
 msgid "travel"
 msgstr "seyahat"
 
@@ -4903,28 +5448,28 @@ msgid "Current grouping of slice result is not optimal."
 msgstr "Dilimleme sonuçlarının mevcut gruplaması ideal değildir."
 
 #, boost-format
-msgid "Increase %1%g filament and %2% changes compared to optimal grouping."
-msgstr "İdeal gruplamaya kıyasla %1%g filament ve %2% değişiklikleri artırın."
+msgid "Increase %1%g filament and %2% nozzle purges compared to optimal grouping."
+msgstr ""
 
 #, boost-format
-msgid "Increase %1%g filament and save %2% changes compared to optimal grouping."
-msgstr "İdeal gruplamaya kıyasla %1%g filament artırın ve %2% değişiklik tasarrufu sağlayın."
+msgid "Increase %1%g filament and save %2% nozzle purges compared to optimal grouping."
+msgstr ""
 
 #, boost-format
-msgid "Save %1%g filament and increase %2% changes compared to optimal grouping."
-msgstr "Optimum gruplamaya kıyasla %1%g filament tasarrufu ve %2% değişiklik artışı."
+msgid "Save %1%g filament and increase %2% nozzle purges compared to optimal grouping."
+msgstr ""
 
 #, boost-format
-msgid "Save %1%g filament and %2% changes compared to a printer with one nozzle."
-msgstr "Tek nozullu bir yazıcıya kıyasla %1%g filament ve %2% değişiklik tasarrufu sağlar."
+msgid "Save %1%g filament and %2% nozzle purges compared to a printer with one nozzle."
+msgstr ""
 
 #, boost-format
-msgid "Save %1%g filament and increase %2% changes compared to a printer with one nozzle."
-msgstr "Tek nozullu bir yazıcıya kıyasla %1% g filament tasarrufu ve %2% değişim artışı."
+msgid "Save %1%g filament and increase %2% nozzle purges compared to a printer with one nozzle."
+msgstr ""
 
 #, boost-format
-msgid "Increase %1%g filament and save %2% changes compared to a printer with one nozzle."
-msgstr "Tek nozullu bir yazıcıya kıyasla %1%g filament artırın ve %2% değişiklik tasarrufu sağlayın."
+msgid "Increase %1%g filament and save %2% nozzle purges compared to a printer with one nozzle."
+msgstr ""
 
 msgid "Set to Optimal"
 msgstr "En Uygun Olarak Ayarla"
@@ -5087,6 +5632,9 @@ msgstr "Model %s'nin konumu veya boyutu %s'nin yazdırılabilir aralığını a�
 msgid " Please check and adjust the part's position or size to fit the printable range:\n"
 msgstr " Lütfen kontrol edin ve parçanın konumunu veya boyutunu yazdırılabilir aralığa uyacak şekilde ayarlayın:\n"
 
+msgid "Unnamed"
+msgstr ""
+
 msgid "Mirror Object"
 msgstr "Nesneyi Aynala"
 
@@ -5158,9 +5706,6 @@ msgstr "Tüm nesneleri hizala"
 msgid "Arrange objects on selected plates"
 msgstr "Seçilen plakalardaki nesneleri hizala"
 
-msgid "Split to objects"
-msgstr "Nesnelere böl"
-
 msgid "And it is valid when there are at least two parts in object or stl has at least two meshes."
 msgstr "Ve nesnede en az iki parça olduğunda veya stl'de en az iki mesh olduğunda geçerlidir."
 
@@ -5183,9 +5728,6 @@ msgid "Select Plate"
 msgstr "Plaka Seç"
 
 msgid "Change camera perspective"
-msgstr ""
-
-msgid "Go to Wiki"
 msgstr ""
 
 #, boost-format
@@ -5223,6 +5765,9 @@ msgstr "Kamerayı sığdır"
 
 msgid "Fit camera to scene or selected object."
 msgstr "Kamerayı sahneye veya seçilen nesneye sığdırın."
+
+msgid "Auto recommend camera angle(Only works when the assembly step function is active)"
+msgstr ""
 
 msgid "Paint Toolbar"
 msgstr "Boyama Araç Çubuğu"
@@ -5452,6 +5997,9 @@ msgstr "Ön İzleme"
 msgid "The current page has unsaved changes. You can continue editing or choose to save/discard before leaving."
 msgstr ""
 
+msgid "Home"
+msgstr ""
+
 msgid "Device"
 msgstr "Yazıcı"
 
@@ -5460,9 +6008,6 @@ msgstr "Çoklu cihaz"
 
 msgid "Project"
 msgstr "Proje"
-
-msgid "Filament Manager"
-msgstr ""
 
 msgid "Yes"
 msgstr "Evet"
@@ -5620,9 +6165,6 @@ msgstr "Proje dosyasını aç"
 msgid "Recent projects"
 msgstr "Son Projeler"
 
-msgid "Save Project"
-msgstr "Projeyi Kaydet"
-
 msgid "Save current project to file"
 msgstr "Mevcut projeyi dosyaya kaydet"
 
@@ -5680,9 +6222,6 @@ msgstr "Ön Ayar Paketini Dışa Aktar"
 msgid "Export current configuration to files"
 msgstr "Geçerli yapılandırmayı dosyalara aktar"
 
-msgid "Export"
-msgstr "Dışa Aktar"
-
 msgid "Publish to MakerWorld"
 msgstr "MakerWorld'de yayınlayın"
 
@@ -5691,12 +6230,6 @@ msgstr "Toplu Ön Ayar Yönetimi"
 
 msgid "Quit"
 msgstr "Çıkış"
-
-msgid "Undo"
-msgstr "Geri al"
-
-msgid "Redo"
-msgstr "İleri Al"
 
 msgid "Cut selection to clipboard"
 msgstr "Seçimi panoya kes"
@@ -6011,7 +6544,7 @@ msgstr "Yazıcı şu anda indirme işlemiyle meşgul. Lütfen bittikten sonra te
 msgid "Printer camera is malfunctioning."
 msgstr "Yazıcı kamerası arızalı."
 
-msgid "Problem occured. Please update the printer firmware and try again."
+msgid "Problem occurred. Please update the printer firmware and try again."
 msgstr "Sorun meydana geldi. Lütfen yazıcı aygıt yazılımını güncelleyin ve tekrar deneyin."
 
 msgid "LAN Only Liveview is off. Please turn on the liveview on printer screen."
@@ -6292,9 +6825,6 @@ msgstr "Y/Z eksenlerini değiştirin"
 
 msgid "(LAN)"
 msgstr "(LAN)"
-
-msgid "Search"
-msgstr "Ara"
 
 msgid "My Device"
 msgstr "Cihazım"
@@ -6760,9 +7290,6 @@ msgstr "%s uyarı"
 msgid "%s has a warning"
 msgstr "%s'de uyarı var"
 
-msgid "Collapse"
-msgstr "Daralt"
-
 msgid "View details"
 msgstr ""
 
@@ -6924,9 +7451,6 @@ msgstr "Git"
 
 msgid "Error:"
 msgstr "Hata:"
-
-msgid "Enable support for"
-msgstr ""
 
 msgid "Open link for more info"
 msgstr ""
@@ -7208,7 +7732,10 @@ msgstr "Filament Ayarları"
 msgid "Printer settings"
 msgstr "Yazıcı Ayarları"
 
-msgid "Remove current plate (if not last one)"
+msgid "At least one plate is required"
+msgstr ""
+
+msgid "Remove current plate"
 msgstr ""
 
 msgid "Auto orient objects on current plate"
@@ -7230,6 +7757,10 @@ msgid "Edit current plate name"
 msgstr ""
 
 msgid "Customize current plate"
+msgstr ""
+
+#, c-format, boost-format
+msgid "%s is not compatible with %s nozzle."
 msgstr ""
 
 #, c-format, boost-format
@@ -7352,8 +7883,8 @@ msgstr "Şimdi eşitle"
 msgid "There are unset nozzle types. Please set the nozzle types of all extruders before synchronizing."
 msgstr "Ayarlanmamış nozul tipleri var. Lütfen senkronize etmeden önce tüm ekstrüderlerin nozul tiplerini ayarlayın."
 
-msgid "Sync extruder infomation"
-msgstr "Ekstrüder bilgilerini senkronize edin"
+msgid "Sync extruder information"
+msgstr ""
 
 msgid ""
 "Tips:\n"
@@ -7374,6 +7905,9 @@ msgstr "Senkronizasyon bilgileri"
 
 msgid "Synchronize nozzle information and the number of AMS"
 msgstr "Nozul bilgilerini ve AMS sayısını senkronize edin"
+
+msgid "Project Filaments"
+msgstr "Proje Filamentleri"
 
 msgid "Purge mode"
 msgstr ""
@@ -7585,6 +8119,12 @@ msgid "Computing texture colors: %s"
 msgstr ""
 
 msgid "Texture Import Warning"
+msgstr ""
+
+msgid ""
+"The imported STEP file is split by sub-assembly, so some objects may not be placed on the build plate at first.\n"
+"It is expected if they are placed on the build plate later after move,rotate gizmo or similar operations.\n"
+"The overall assembly can be checked from the assembly thumbnail or by entering the assembly view."
 msgstr ""
 
 msgid "Load these files as a single object with multiple parts?\n"
@@ -8132,6 +8672,12 @@ msgstr "Sebep: \"%1%\" ve başka bir parçanın kesişimi yoktur."
 msgid "Negative parts detected. Would you like to perform mesh boolean before exporting?"
 msgstr "Negatif parçalar tespit edildi. Dışa aktarmadan önce mesh boolean yapmak ister misiniz?"
 
+msgid "Failed to save the project: an invalid setting value was found while writing the file."
+msgstr ""
+
+msgid "Please check your settings and try again."
+msgstr ""
+
 msgid ""
 "Security Warning: This 3MF file contains post-processing script commands that will run automatically during slicing and may pose security risks!\n"
 "Please verify the file source and script contents before continuing."
@@ -8294,9 +8840,6 @@ msgstr "Bölgeyi değiştirmek hesabınızdan çıkış yapmanıza neden olacakt
 msgid "Region selection"
 msgstr "Bölge seçimi"
 
-msgid "Second"
-msgstr "Saniye"
-
 msgid ""
 "Please note that the model show will undergo certain changes at small pixels case.\n"
 "Enabled LOD requires application restart."
@@ -8325,11 +8868,30 @@ msgstr ""
 "\n"
 "Bu özelliği etkinleştirmeye devam ediyor musunuz?"
 
-msgid "Browse"
-msgstr "Aç"
+msgid "Download path"
+msgstr ""
 
 msgid "Choose Download Directory"
 msgstr "İndirme Dizini seçin"
+
+msgctxt "Preference"
+msgid "General"
+msgstr ""
+
+msgctxt "Preference"
+msgid "User"
+msgstr ""
+
+msgctxt "Preference"
+msgid "3D"
+msgstr ""
+
+msgctxt "Preference"
+msgid "Other"
+msgstr ""
+
+msgid "Developer Tools"
+msgstr ""
 
 msgid "General Settings"
 msgstr "Genel Ayarlar"
@@ -8361,32 +8923,8 @@ msgstr "Imperial"
 msgid "Units"
 msgstr "Birimler"
 
-msgid "Use 12-hour time format"
-msgstr ""
-
-msgid "Display time in 12-hour format with AM/PM instead of 24-hour format"
-msgstr ""
-
-msgid "Keep only one Bambu Studio instance"
-msgstr "Yalnızca bir Bambu Studio örneği bulundurun"
-
-msgid "On OSX there is always only one instance of app running by default. However it is allowed to run multiple instances of same app from the command line. In such case this settings will allow only one instance."
-msgstr "OSX'te her zaman varsayılan olarak çalışan yalnızca bir uygulama örneği vardır. Ancak, komut satırından aynı uygulamanın birden çok örneğinin çalıştırmasına izin verilir. Böyle bir durumda bu ayarlar yalnızca bir örneğe izin verecektir."
-
-msgid "If this is enabled, when starting Bambu Studio and another instance of the same Bambu Studio is already running, that instance will be reactivated instead."
-msgstr "Bu etkinleştirilmişse, Bambu Studio başlatıldığında ve aynı Bambu Studio'nun başka bir örneği zaten çalışıyorsa, bunun yerine o örnek yeniden etkinleştirilir."
-
-msgid "Automatically transfer modified value when switching process and filament presets"
-msgstr "İşlem ve filament ön ayarlarını değiştirirken değiştirilen değeri otomatik olarak aktar"
-
-msgid "After closing, a popup will appear to ask each time"
-msgstr "Kapattıktan sonra, her seferinde sormak için bir açılır pencere görünecektir"
-
-msgid "Auto plate type"
-msgstr "Otomatik plaka tipi"
-
-msgid "Studio will remember build plate selected last time for certain printer model."
-msgstr "Studio, belirli yazıcı modeli için en son seçilen yapı plakasını hatırlayacaktır."
+msgid "Enable dark mode"
+msgstr "Karanlık modu etkinleştirin"
 
 msgid "All"
 msgstr "Tümü"
@@ -8400,17 +8938,26 @@ msgstr "Otomatik Temizleme"
 msgid "Auto calculate flush volumes"
 msgstr "Temizleme hacimlerini otomatik hesapla"
 
+msgid "Keep only one Bambu Studio instance"
+msgstr "Yalnızca bir Bambu Studio örneği bulundurun"
+
+msgid "On OSX there is always only one instance of app running by default. However it is allowed to run multiple instances of same app from the command line. In such case this settings will allow only one instance."
+msgstr "OSX'te her zaman varsayılan olarak çalışan yalnızca bir uygulama örneği vardır. Ancak, komut satırından aynı uygulamanın birden çok örneğinin çalıştırmasına izin verilir. Böyle bir durumda bu ayarlar yalnızca bir örneğe izin verecektir."
+
+msgid "If this is enabled, when starting Bambu Studio and another instance of the same Bambu Studio is already running, that instance will be reactivated instead."
+msgstr "Bu etkinleştirilmişse, Bambu Studio başlatıldığında ve aynı Bambu Studio'nun başka bir örneği zaten çalışıyorsa, bunun yerine o örnek yeniden etkinleştirilir."
+
+msgid "Take effect after restarting Studio"
+msgstr ""
+
+msgid "The Filament Manager is turned off by default on macOS because compatibility issues on some systems may cause the application to become unresponsive."
+msgstr ""
+
 msgid "Multi-device Management(Take effect after restarting Studio)."
 msgstr "Çoklu cihaz yönetimi (Studio yeniden başlatıldıktan sonra etkili olacaktır)."
 
 msgid "With this option enabled, you can send a task to multiple devices at the same time and manage multiple devices."
 msgstr "Bu seçenek etkinleştirildiğinde, aynı anda birden fazla cihaza görev gönderebilir ve birden fazla cihazı yönetebilirsiniz."
-
-msgid "Show the step mesh parameter setting dialog."
-msgstr "Adım ağı parametre ayarı iletişim kutusunu gösterir."
-
-msgid "If enabled,a parameter settings dialog will appear during STEP file import."
-msgstr "Etkinleştirilirse, STEP dosyası içe aktarma sırasında bir parametre ayarları iletişim kutusu görüntülenir."
 
 msgid "Support beta version update."
 msgstr "Beta sürüm güncellemesini destekleyin."
@@ -8418,32 +8965,66 @@ msgstr "Beta sürüm güncellemesini destekleyin."
 msgid "With this option enabled, you can receive beta version updates."
 msgstr "Bu seçenek etkinleştirildiğinde, beta sürüm güncellemelerini alabilirsiniz."
 
+msgid "Join the User Experience Improvement Program."
+msgstr ""
+
+msgctxt "Preferences"
+msgid "Learn more"
+msgstr ""
+
+msgid "User Settings"
+msgstr ""
+
+msgid "Auto plate type"
+msgstr "Otomatik plaka tipi"
+
+msgid "Studio will remember build plate selected last time for certain printer model."
+msgstr "Studio, belirli yazıcı modeli için en son seçilen yapı plakasını hatırlayacaktır."
+
+msgid "12-hour"
+msgstr ""
+
+msgid "24-hour"
+msgstr ""
+
+msgid "time format for print progress"
+msgstr ""
+
+msgid "Display time in 12-hour format with AM/PM instead of 24-hour format"
+msgstr ""
+
+msgid "Keep liveview when printing."
+msgstr "Yazdırırken canlı görünümü koruyun."
+
+msgid "By default, Liveview will pause after 15 minutes of inactivity on the computer. Check this box to disable this feature during printing."
+msgstr "Varsayılan olarak, Liveview bilgisayarda 15 dakika işlem yapılmadığında duraklar. Yazdırma sırasında bu özelliği devre dışı bırakmak için bu kutuyu işaretleyin."
+
+msgid "Automatically transfer modified value when switching process and filament presets"
+msgstr "İşlem ve filament ön ayarlarını değiştirirken değiştirilen değeri otomatik olarak aktar"
+
+msgid "After closing, a popup will appear to ask each time"
+msgstr "Kapattıktan sonra, her seferinde sormak için bir açılır pencere görünecektir"
+
 msgid "Remove the restriction on mixed printing of high and low temperature filaments."
 msgstr "Yüksek ve düşük sıcaklıktaki filamentlerin karışık baskısı üzerindeki kısıtlamayı kaldırın."
 
 msgid "With this option enabled, you can print materials with a large temperature difference together."
 msgstr "Bu seçenek etkinleştirildiğinde, büyük sıcaklık farkına sahip malzemeleri birlikte yazdırabilirsiniz."
 
-msgid "Open full screen camera view on active monitor only."
-msgstr ""
+msgid "Auto sync user presets(Printer/Filament/Process)"
+msgstr "Kullanıcı ön ayarları otomatik senkronizasyon (Yazıcı/Filament/İşlem)"
 
-msgid "When enabled, the camera full screen view opens only on the monitor that contains Bambu Studio."
-msgstr ""
+msgid "If enabled, auto sync user presets with cloud after Bambu Studio startup or presets modified."
+msgstr "Etkinleştirilirse, Bambu Studio başlatıldıktan veya ön ayarlar değiştirildikten sonra kullanıcı ön ayarlarını bulutla otomatik olarak senkronize edin."
 
-msgid "Clear my choice for synchronizing printer preset after loading the file."
-msgstr "Dosyayı yükledikten sonra yazıcı ön ayarını senkronize etmek için seçimimi temizleyin."
+msgid "Auto check for system presets updates"
+msgstr "Sistem ön ayarları güncellemeleri için otomatik kontrol"
 
-msgid "Clear my choice for Load 3mf dialog settings."
-msgstr "3mf Yükle pencere ayarlarındaki seçimimi kaldır."
+msgid "If enabled, auto check whether there are system presets updates after Bambu Studio startup."
+msgstr "Etkinleştirilirse, Bambu Studio başlatıldıktan sonra sistem ön ayarları güncellemeleri olup olmadığını otomatik olarak kontrol eder."
 
-msgid "Clear my choice for executing post-processing scripts."
-msgstr ""
-
-msgid "Show the security warning dialog again before slicing when post-processing scripts are configured."
-msgstr ""
-
-msgid "Clear my choice for disabling support parameter recommendation."
-msgstr ""
+msgid "Auto-fill previously logged-in accounts."
+msgstr "Önceden oturum açılmış hesapları otomatik olarak doldur."
 
 msgid "3D Settings"
 msgstr "3D Ayarları"
@@ -8454,11 +9035,44 @@ msgstr "Fare konumuna yakınlaştır"
 msgid "Zoom in towards the mouse pointer's position in the 3D view, rather than the 2D window center."
 msgstr "2B pencere merkezi yerine, 3B görünümde fare işaretçisinin konumuna doğru yakınlaştırın."
 
+msgid "Display overview"
+msgstr ""
+
+msgid "Grabber scale"
+msgstr "Kavrama ölçeği"
+
+msgid "Set grabber size for move,rotate,scale tool."
+msgstr "Taşıma, döndürme, ölçeklendirme aracı için tutucu boyutunu ayarlayın."
+
+msgid "Value range"
+msgstr "Değer aralığı"
+
+msgid "Tooltip offset"
+msgstr ""
+
+msgid "Set tooltip offset for different mouse size."
+msgstr ""
+
+msgid "Collapsible"
+msgstr "Katlanabilir"
+
+msgid "Uncollapsible"
+msgstr "Katlanamaz"
+
+msgid "Toolbar Style"
+msgstr "Araç Çubuğu Stili"
+
 msgid "Always show shells in preview"
 msgstr "Kabukları her zaman önizlemede göster"
 
-msgid "Always show shells or not in preview view tab.If change value,you should reslice."
+msgid "Always show shells or not in preview view tab. If you change this value, you should reslice."
 msgstr "Kabukları her zaman önizleme görünümü sekmesinde gösterin veya göstermeyin, değeri değiştirirseniz yeniden dilimlemeniz gerekir."
+
+msgid "Show the step mesh parameter setting dialog."
+msgstr "Adım ağı parametre ayarı iletişim kutusunu gösterir."
+
+msgid "If enabled,a parameter settings dialog will appear during STEP file import."
+msgstr "Etkinleştirilirse, STEP dosyası içe aktarma sırasında bir parametre ayarları iletişim kutusu görüntülenir."
 
 msgid "Import a single SVG and split it"
 msgstr "Tek bir SVG'yi içe aktarın ve bölün"
@@ -8478,29 +9092,11 @@ msgstr "Son kullanılan renk şemasını hatırla"
 msgid "When enabled, the last used color scheme (e.g., Line Type, Speed) will be automatically applied on next startup."
 msgstr "Etkinleştirildiğinde, son kullanılan renk şeması (örneğin, Çizgi Türü, Hız) bir sonraki başlatmada otomatik olarak uygulanacaktır."
 
-msgid "Display overview"
-msgstr ""
-
-msgid "Show assembly BVH primary bounds"
-msgstr ""
-
-msgid "Display the BVH primary bounding box wireframe in assembly view."
-msgstr ""
-
 msgid "Improve rendering performance by lod"
 msgstr "Oluşturma performansını lod ile iyileştirin"
 
 msgid "Improved rendering performance under the scene of multiple plates and many models."
 msgstr "Birden fazla plaka ve çok sayıda model sahnesi altında iyileştirilmiş işleme performansı."
-
-msgid "Collapsible"
-msgstr "Katlanabilir"
-
-msgid "Uncollapsible"
-msgstr "Katlanamaz"
-
-msgid "Toolbar Style"
-msgstr "Araç Çubuğu Stili"
 
 msgid "Enable advanced gcode viewer"
 msgstr "Gelişmiş gcode görüntüleyiciyi etkinleştir"
@@ -8508,35 +9104,77 @@ msgstr "Gelişmiş gcode görüntüleyiciyi etkinleştir"
 msgid "Enable advanced gcode viewer."
 msgstr "Gelişmiş gcode görüntüleyiciyi etkinleştir."
 
-msgid "Grabber scale"
-msgstr "Kavrama ölçeği"
-
-msgid "Set grabber size for move,rotate,scale tool."
-msgstr "Taşıma, döndürme, ölçeklendirme aracı için tutucu boyutunu ayarlayın."
-
-msgid "Value range"
-msgstr "Değer aralığı"
-
-msgid "Tooltip offset"
+msgid "Show assembly BVH primary bounds"
 msgstr ""
 
-msgid "Set tooltip offset for different mouse size."
+msgid "Display the BVH primary bounding box wireframe in assembly view."
 msgstr ""
 
-msgid "Presets"
-msgstr "Ön ayarlar"
+msgid "Open full screen camera view on active monitor only."
+msgstr ""
 
-msgid "Auto sync user presets(Printer/Filament/Process)"
-msgstr "Kullanıcı ön ayarları otomatik senkronizasyon (Yazıcı/Filament/İşlem)"
+msgid "When enabled, the camera full screen view opens only on the monitor that contains Bambu Studio."
+msgstr ""
 
-msgid "If enabled, auto sync user presets with cloud after Bambu Studio startup or presets modified."
-msgstr "Etkinleştirilirse, Bambu Studio başlatıldıktan veya ön ayarlar değiştirildikten sonra kullanıcı ön ayarlarını bulutla otomatik olarak senkronize edin."
+msgid "Maximum recent projects"
+msgstr "Maksimum yeni proje"
 
-msgid "Auto check for system presets updates"
-msgstr "Sistem ön ayarları güncellemeleri için otomatik kontrol"
+msgid "Maximum count of recent projects"
+msgstr "Maksimum yeni proje sayısı"
 
-msgid "If enabled, auto check whether there are system presets updates after Bambu Studio startup."
-msgstr "Etkinleştirilirse, Bambu Studio başlatıldıktan sonra sistem ön ayarları güncellemeleri olup olmadığını otomatik olarak kontrol eder."
+msgid "No warnings when loading 3MF with modified G-codes"
+msgstr "Değiştirilmiş G-kodları içeren 3MF dosyalarını yüklerken uyarı verme"
+
+msgid "10 seconds"
+msgstr ""
+
+msgid "20 seconds"
+msgstr ""
+
+msgid "30 seconds"
+msgstr ""
+
+msgid "1 minute"
+msgstr ""
+
+msgid "2 minutes"
+msgstr ""
+
+msgid "5 minutes"
+msgstr ""
+
+msgid "10 minutes"
+msgstr ""
+
+msgid "30 minutes"
+msgstr ""
+
+msgid "never"
+msgstr ""
+
+msgid "Auto-Backup"
+msgstr "Otomatik yedekleme"
+
+msgid "The peroid of backup in seconds."
+msgstr "Saniye cinsinden yedekleme periyodu."
+
+msgid "Online Models"
+msgstr "Çevrimiçi Modeller"
+
+msgid "Show online staff-picked models on the home page"
+msgstr "Personel tarafından seçilen çevrimiçi modelleri ana sayfada gösterin"
+
+msgid "Show history on the home page"
+msgstr "Ana sayfada geçmişi göster"
+
+msgid "Developer Mode"
+msgstr ""
+
+msgid "Develop mode"
+msgstr "Geliştirici Modu"
+
+msgid "Skip AMS blacklist check"
+msgstr "AMS kara liste kontrolünü atla"
 
 msgid "Associate Files To Bambu Studio"
 msgstr "Bambu Stüdyosuna Ortak Dosyalar"
@@ -8559,135 +9197,8 @@ msgstr ".step/.stp dosyalarını Bambu Studio ile ilişkilendirme"
 msgid "If enabled, sets Bambu Studio as default application to open .step files"
 msgstr "Etkinleştirilirse, Bambu Studio'yu .step dosyalarını açmak için varsayılan uygulama olarak ayarlar"
 
-msgid "Online Models"
-msgstr "Çevrimiçi Modeller"
-
-msgid "Show online staff-picked models on the home page"
-msgstr "Personel tarafından seçilen çevrimiçi modelleri ana sayfada gösterin"
-
-msgid "Show history on the home page"
-msgstr "Ana sayfada geçmişi göster"
-
-msgid "Reminder During Slicing"
-msgstr "Dilimleme Sırasında Hatırlat"
-
-msgid "Automatic mode"
-msgstr "Otomatik mod"
-
-msgid "Maximum recent projects"
-msgstr "Maksimum yeni proje"
-
-msgid "Maximum count of recent projects"
-msgstr "Maksimum yeni proje sayısı"
-
-msgid "Clear my choice on the unsaved projects."
-msgstr "Kaydedilmemiş projelerdeki seçimimi temizle."
-
-msgid "No warnings when loading 3MF with modified G-codes"
-msgstr "Değiştirilmiş G-kodları içeren 3MF dosyalarını yüklerken uyarı verme"
-
-msgid "Auto-Backup"
-msgstr "Otomatik yedekleme"
-
-msgid "Backup your project periodically for restoring from the occasional crash."
-msgstr "Ara sıra meydana gelen çökmelerden sonra geri yüklemek için projenizi düzenli aralıklarla yedekleyin."
-
-msgid "every"
-msgstr "her"
-
-msgid "The peroid of backup in seconds."
-msgstr "Saniye cinsinden yedekleme periyodu."
-
-msgid "Downloads"
-msgstr "İndirilenler"
-
-msgid "Media"
-msgstr "Medya"
-
-msgid "Keep liveview when printing."
-msgstr "Yazdırırken canlı görünümü koruyun."
-
-msgid "By default, Liveview will pause after 15 minutes of inactivity on the computer. Check this box to disable this feature during printing."
-msgstr "Varsayılan olarak, Liveview bilgisayarda 15 dakika işlem yapılmadığında duraklar. Yazdırma sırasında bu özelliği devre dışı bırakmak için bu kutuyu işaretleyin."
-
-msgid "Dark Mode"
-msgstr "Karanlık Mod"
-
-msgid "Enable dark mode"
-msgstr "Karanlık modu etkinleştirin"
-
-msgid "Pop up to select filament grouping mode"
-msgstr "Filament gruplama modunu seçmek için açılır pencere"
-
-msgid "User Experience"
-msgstr "Kullanıcı Deneyimi"
-
-msgid "Join the User Experience Improvement Program."
+msgid "Log"
 msgstr ""
-
-msgctxt "Preferences"
-msgid "Learn more"
-msgstr ""
-
-msgid "Auto-fill previously logged-in accounts."
-msgstr "Önceden oturum açılmış hesapları otomatik olarak doldur."
-
-msgid "Develop Mode"
-msgstr "Geliştirici Modu"
-
-msgid "Develop mode"
-msgstr "Geliştirici Modu"
-
-msgid "Skip AMS blacklist check"
-msgstr "AMS kara liste kontrolünü atla"
-
-msgid "Home page and daily tips"
-msgstr "Ana sayfa ve günlük ipuçları"
-
-msgid "Show home page on startup"
-msgstr "Başlangıçta ana sayfayı göster"
-
-msgid "Sync settings"
-msgstr "Ayarları senkronize et"
-
-msgid "User sync"
-msgstr "Kullanıcı senkronizasyonu"
-
-msgid "Preset sync"
-msgstr "Ön ayar senkronizasyonu"
-
-msgid "Preferences sync"
-msgstr "Tercihler senkronizasyonu"
-
-msgid "View control settings"
-msgstr "Kontrol ayarlarını görüntüle"
-
-msgid "Rotate of view"
-msgstr "Görünümü döndür"
-
-msgid "Move of view"
-msgstr "Görüşün taşınması"
-
-msgid "Zoom of view"
-msgstr "Görünümü yakınlaştır"
-
-msgid "Other"
-msgstr "Diğer"
-
-msgid "Mouse wheel reverses when zooming"
-msgstr "Yakınlaştırma sırasında fare tekerleği ters dönüyor"
-
-msgid "Enable SSL(MQTT)"
-msgstr "SSL'yi etkinleştir(MQTT)"
-
-msgid "Enable SSL(FTP)"
-msgstr "SSL'yi (FTP) etkinleştir"
-
-msgid "Internal developer mode"
-msgstr "Dahili geliştirici modu"
-
-msgid "Log Level"
-msgstr "Günlük Düzeyi"
 
 msgid "fatal"
 msgstr "kritik"
@@ -8703,6 +9214,18 @@ msgstr "hata ayıklama"
 
 msgid "trace"
 msgstr "iz"
+
+msgid "Log Level"
+msgstr "Günlük Düzeyi"
+
+msgid "Internal developer mode"
+msgstr "Dahili geliştirici modu"
+
+msgid "Enable SSL(MQTT)"
+msgstr "SSL'yi etkinleştir(MQTT)"
+
+msgid "Enable SSL(FTP)"
+msgstr "SSL'yi (FTP) etkinleştir"
 
 msgid "Host Setting"
 msgstr "Yazıcı Ayarı"
@@ -8731,8 +9254,29 @@ msgstr "DEBUG ayarları başarıyla kaydedildi!"
 msgid "Switch cloud environment, Please login again!"
 msgstr "Bulut ortamını değiştirin, lütfen tekrar giriş yapın!"
 
-msgid "System presets"
-msgstr "Sistem ön ayarları"
+msgid "Reset all warning dialogs"
+msgstr ""
+
+msgid "Reset preferences"
+msgstr ""
+
+msgid "All warning dialogs that you have disabled by checking \"Don't show again\" are now re-enabled and will show next time they apply."
+msgstr ""
+
+msgid "Check details"
+msgstr ""
+
+msgid ""
+"- Sync printer presets after loading a file\n"
+"- \"Load 3MF\" dialog settings\n"
+"- Executing post-processing scripts\n"
+"- Support structure recommendation prompt\n"
+"- Unsaved projects.\n"
+"- Mixed color sublayer with variable layer height warning"
+msgstr ""
+
+msgid "Are you sure you want to reset all preferences? Changes will take effect after restart."
+msgstr ""
 
 msgid "User presets"
 msgstr "Kullanıcı ön ayarları"
@@ -9078,7 +9622,7 @@ msgstr "Filament, AMS yuvasındaki filamentle eşleşmiyor. AMS yuvası ataması
 msgid "The selected printer (%s) is incompatible with the print file configuration (%s). Please adjust the printer preset in the prepare page or choose a compatible printer on this page."
 msgstr "Seçilen yazıcı (%s), baskı dosyası yapılandırmasıyla (%s) uyumlu değil. Lütfen hazırlık sayfasında yazıcı ön ayarını düzenleyin veya bu sayfada uyumlu bir yazıcı seçin."
 
-msgid "When enable spiral vase mode, machines with I3 structure will not generate timelapse videos."
+msgid "When enabling spiral vase mode, machines with I3 structure will not generate timelapse videos."
 msgstr "Spiral vazo modu etkinleştirildiğinde, I3 yapısına sahip makineler zaman atlamalı videolar oluşturmayacaktır."
 
 msgid "The current printer does not support timelapse in Traditional Mode when printing By-Object."
@@ -9105,8 +9649,14 @@ msgstr "Lütfen aşağıdakileri kontrol edin:"
 msgid "Please fix the error above, otherwise printing cannot continue."
 msgstr "Lütfen yukarıdaki hatayı düzeltin, aksi takdirde yazdırma işlemi devam edemez."
 
-msgid "Please click the confirm button if you still want to proceed with printing."
-msgstr "Hala yazdırma işlemine devam etmek istiyorsanız lütfen onayla düğmesine tıklayın."
+msgid "Please click the \"Continue printing\"  button if you still want to proceed with printing."
+msgstr ""
+
+msgid "Continue printing"
+msgstr ""
+
+msgid "Return to modify"
+msgstr ""
 
 msgid "This checks the flatness of heatbed. Leveling makes extruded height uniform."
 msgstr "Bu, ısı yatağının düzlüğünü kontrol eder. Tesviye, ekstrüzyon yüksekliğini tekdüze hale getirir."
@@ -9269,6 +9819,9 @@ msgid "The hardness of current material (%s) exceeds the hardness of %s (%s). It
 msgstr ""
 
 msgid "If 'Dynamic Flow Calibration' is set to Auto/On, the system will use the manual calibration value or the default value and skip the flow calibration process. You can perform a manual flow calibration for TPU filament on the 'Calibration' page."
+msgstr ""
+
+msgid "The filament in the AMS may be insufficient for this print. Please refill or replace it."
 msgstr ""
 
 msgid "Some filaments may switch between extruders during printing. Manual K-value calibration cannot be applied throughout the entire print, which may affect print quality. Enabling Flow Dynamics Calibration is recommended."
@@ -9491,7 +10044,7 @@ msgstr "Oku ve kabul et"
 msgid "Terms and Conditions"
 msgstr "Şartlar ve koşullar"
 
-msgid "Thank you for purchasing a Bambu Lab device.Before using your Bambu Lab device, please read the termsand conditions.By clicking to agree to use your Bambu Lab device, you agree to abide by the Privacy Policy and Terms of Use(collectively, the \"Terms\"). If you do not comply with or agree to the Bambu Lab Privacy Policy, please do not use Bambu Lab equipment and services."
+msgid "Thank you for purchasing a Bambu Lab device. Before using your Bambu Lab device, please read the terms and conditions. By clicking to agree to use your Bambu Lab device, you agree to abide by the Privacy Policy and Terms of Use (collectively, the \"Terms\"). If you do not comply with or agree to the Bambu Lab Privacy Policy, please do not use Bambu Lab equipment and services."
 msgstr "Bir Bambu Lab cihazı satın aldığınız için teşekkür ederiz Bambu Lab cihazınızı kullanmadan önce lütfen şartları ve koşulları okuyun Bambu Lab cihazınızı kullanmayı kabul etmek için tıkladığınızda, Gizlilik Politikası ve Kullanım Şartlarına (topluca \"Şartlar\") uymayı kabul etmiş olursunuz. Bambu Lab Gizlilik Politikası'na uymuyorsanız veya kabul etmiyorsanız, lütfen Bambu Lab ekipman ve hizmetlerini kullanmayın."
 
 msgid "and"
@@ -10007,6 +10560,12 @@ msgstr "Firmware Geri Çekme"
 msgid "Detached"
 msgstr "Söküldü"
 
+msgid "The current preset is embedded in the 3MF project file. Please save changes directly.  'Save as new' is not supported for preset inside project."
+msgstr ""
+
+msgid "Unable to save preset"
+msgstr ""
+
 #, c-format, boost-format
 msgid "%d Filament Preset and %d Process Preset is attached to this printer. Those presets would be deleted if the printer is deleted."
 msgstr "%d Filament Ön Ayarı ve %d İşlem Ön Ayarı bu yazıcıya eklenmiştir.Yazıcı silinirse bu ön ayarlar silinir."
@@ -10050,11 +10609,11 @@ msgstr ""
 msgid "No modifications need to be copied."
 msgstr "Hiçbir değişikliğin kopyalanmasına gerek yoktur."
 
-msgid "Copy paramters"
-msgstr "Parametreleri kopyala"
+msgid "Copy parameters"
+msgstr ""
 
 #, c-format, boost-format
-msgid "Modify paramters of %s"
+msgid "Modify parameters of %s"
 msgstr ""
 
 #, c-format, boost-format
@@ -10222,9 +10781,6 @@ msgstr "Resimler"
 msgid "Bill of Materials"
 msgstr "Malzeme Listesi"
 
-msgid "Assembly Guide"
-msgstr "Montaj Kılavuzu"
-
 msgid "Author"
 msgstr "Yazar"
 
@@ -10325,9 +10881,6 @@ msgstr ""
 msgid " And "
 msgstr ""
 
-msgid "Note"
-msgstr "Not"
-
 msgid "The color has been selected, you can choose OK to continue or manually adjust it."
 msgstr ""
 
@@ -10408,9 +10961,6 @@ msgstr ""
 
 msgid "Use AMS"
 msgstr "AMS kullanın"
-
-msgid "Tip"
-msgstr "İpucu"
 
 msgid "Only synchronize filament type and color, not including AMS slot information."
 msgstr "Yalnızca filament türünü ve rengini senkronize edin, AMS yuvası bilgilerini dahil etmeyin."
@@ -11835,6 +12385,9 @@ msgstr "Birden fazla nesneyi spiral vazo modunda yazdırmak için lütfen \"Nesn
 msgid "The spiral vase mode does not work when an object contains more than one materials."
 msgstr "Bir nesne birden fazla malzeme içerdiğinde spiral vazo modu çalışmaz."
 
+msgid "The spiral vase mode does not work when an object contains regions with different print settings."
+msgstr ""
+
 msgid "Variable layer height is not supported with Organic supports."
 msgstr "Değişken katman yüksekliği Organik desteklerle desteklenmez."
 
@@ -12140,6 +12693,22 @@ msgstr "Köprü akışı"
 
 msgid "Decrease this value slightly(for example 0.9) to reduce the amount of material for bridge, to improve sag"
 msgstr "Köprü için malzeme miktarını azaltmak ve sarkmayı iyileştirmek için bu değeri biraz azaltın (örneğin 0,9)"
+
+msgid "Bridge counterbore holes"
+msgstr ""
+
+msgid ""
+"This option creates bridges for counterbore holes, allowing them to be printed without support. Available modes include:\n"
+"1. None: No bridge is created\n"
+"2. Partially Bridged: Only a part of the unsupported area will be bridged\n"
+"3. Sacrificial Layer: A full sacrificial bridge layer is created"
+msgstr ""
+
+msgid "Partially bridged"
+msgstr ""
+
+msgid "Sacrificial layer"
+msgstr ""
 
 msgid "Top surface flow ratio"
 msgstr "Üst katı dolgu akış oranı"
@@ -12615,8 +13184,8 @@ msgstr "Nesne tarafından ayarlanan akış oranı, anlamı akış oranı ile ayn
 msgid "Enable pressure advance"
 msgstr "Basınç Avansı (PA)"
 
-msgid "Enable pressure advance, auto calibration result will be overwriten once enabled. Useless for Bambu Printer"
-msgstr "Basınç avansını etkinleştirin, otomatik kalibrasyon sonucu etkinleştirildikten sonra üzerine yazılacaktır. Bambu Yazıcı için kullanışsız"
+msgid "Enable pressure advance, auto calibration result will be overwritten once enabled. Useless for Bambu Printer"
+msgstr ""
 
 msgid "Pressure advance(Klipper) AKA Linear advance factor(Marlin). Useless for Bambu Printer"
 msgstr "Basınç avansı (Klipper) AKA Doğrusal avans faktörü (Marlin). Bambu Yazıcı için işe yaramaz"
@@ -14170,6 +14739,12 @@ msgstr "Düzgün veya geleneksel mod seçilirse her baskı için bir hızlandır
 msgid "Traditional"
 msgstr "Geleneksel"
 
+msgid "Farthest point timelapse"
+msgstr ""
+
+msgid "When enabled, the timelapse snapshot is taken at the farthest point from camera instead of traveling to the wipe tower or excess chute. Only effective in traditional timelapse mode on non-I3 printers."
+msgstr ""
+
 msgid "Temperature variation"
 msgstr "Sıcaklık değişimi"
 
@@ -14828,13 +15403,6 @@ msgstr "Dolgu takım yolu oluşturma"
 
 msgid "Detect overhangs for auto-lift"
 msgstr "Otomatik kaldırma için çıkıntıları tespit edin"
-
-msgid "Levitating objects cannot be printed without supports."
-msgstr ""
-
-#, c-format, boost-format
-msgid "It seems object %s has floating regions. Please re-orient the object or enable support generation."
-msgstr ""
 
 msgid "Checking support necessity"
 msgstr "Destek gerekliliğinin kontrol edilmesi"
@@ -15932,6 +16500,9 @@ msgstr "Yazıcı ön ayarı bulunamadı, lütfen yeniden seçin."
 msgid "Printer Preset"
 msgstr "Yazıcı Ön Ayarı"
 
+msgid "Presets"
+msgstr "Ön ayarlar"
+
 msgid "Filament Preset Template"
 msgstr "Filament Ön Ayar Şablonu"
 
@@ -16244,6 +16815,9 @@ msgstr "%1s malzemesini %2s nozul ile yazdırmak nozul hasarına neden olabilir.
 msgid "Need select printer"
 msgstr "Yazıcı seçmeniz gerekiyor"
 
+msgid "Failed to load calibration presets. Please check whether the selected printer, nozzle and print profiles are valid."
+msgstr ""
+
 msgid "The start, end or step is not valid value."
 msgstr "Başlangıç, bitiş veya adım geçerli bir değer değildir."
 
@@ -16346,8 +16920,8 @@ msgstr "Duet'e bağlantı düzgün çalışıyor."
 msgid "Could not connect to Duet"
 msgstr "Duet'e bağlanılamadı"
 
-msgid "Unknown error occured"
-msgstr "Bilinmeyen hata oluştu"
+msgid "Unknown error occurred"
+msgstr ""
 
 msgid "Wrong password"
 msgstr "Wrong password"
@@ -16611,8 +17185,8 @@ msgstr "Kişisel erişim anahtarı boş, lütfen doğru anahtarı girin."
 msgid "Helio: Presigned URL Created"
 msgstr "Helio: Önceden imzalanmış URL oluşturuldu"
 
-msgid "Helio: file succesfully uploaded"
-msgstr "Helio: dosya başarıyla yüklendi"
+msgid "Helio: file successfully uploaded"
+msgstr ""
 
 msgid "Helio: file upload failed"
 msgstr "Helio: dosya yükleme başarısız oldu"
@@ -16797,16 +17371,16 @@ msgid "No content"
 msgstr "İçerik yok"
 
 #, c-format, boost-format
-msgid "Printer presets (%d/%d)"
-msgstr "Yazıcı ön ayarları (%d/%d)"
+msgid "Printer presets (%d)"
+msgstr ""
 
 #, c-format, boost-format
-msgid "Filament presets (%d/%d)"
-msgstr "Filament ön ayarları (%d/%d)"
+msgid "Filament presets (%d)"
+msgstr ""
 
 #, c-format, boost-format
-msgid "Process presets (%d/%d)"
-msgstr "İşlem ön ayarları (%d/%d)"
+msgid "Process presets (%d)"
+msgstr ""
 
 #, c-format, boost-format
 msgid "%u Selected"
@@ -17254,6 +17828,9 @@ msgstr ""
 msgid "Print Outcome: "
 msgstr ""
 
+msgid "Click to edit ratio"
+msgstr ""
+
 msgid "Edit Mixed Filament"
 msgstr ""
 
@@ -17261,9 +17838,6 @@ msgid "Effect Preview"
 msgstr ""
 
 msgid "Select Mixed Materials"
-msgstr ""
-
-msgid "+ Add Material"
 msgstr ""
 
 msgid "- Delete Material"
@@ -17310,6 +17884,52 @@ msgid "Maximum number of components reached"
 msgstr ""
 
 msgid "Remove the third material"
+msgstr ""
+
+msgid "Project Filament List"
+msgstr ""
+
+msgid "Standard Mode Recommendations"
+msgstr ""
+
+msgid "Target Color"
+msgstr ""
+
+msgid "Select Color Decomposition"
+msgstr ""
+
+msgid "Arbitrary Mode"
+msgstr ""
+
+msgid "Material List"
+msgstr ""
+
+msgid "Standard Mode"
+msgstr ""
+
+msgid "At least two filaments of the same material type are required for decomposition"
+msgstr ""
+
+#, boost-format
+msgid "The material list supports at most %1% colors. After %2% decomposition, the material count would exceed %1%. Please delete unused filaments on the main screen before decomposing."
+msgstr ""
+
+msgid "Cyan"
+msgstr ""
+
+msgid "Magenta"
+msgstr ""
+
+msgid "Yellow"
+msgstr ""
+
+msgid ", "
+msgstr ""
+
+msgid "The current filament list does not contain "
+msgstr ""
+
+msgid ". A project filament required by the mixed filament will be created automatically after decomposition."
 msgstr ""
 
 msgid "Material Ratio"
@@ -17595,6 +18215,154 @@ msgid ""
 "First-Time-Right Reliability\n"
 "Less babysitting, more predictable output. Example: a small farm running PETG parts avoids 'fail at hour 6' surprises and keeps batches on schedule."
 msgstr ""
+
+#~ msgid "Second"
+#~ msgstr "Saniye"
+
+#~ msgid "Backup your project periodically for restoring from the occasional crash."
+#~ msgstr "Ara sıra meydana gelen çökmelerden sonra geri yüklemek için projenizi düzenli aralıklarla yedekleyin."
+
+#~ msgid "every"
+#~ msgstr "her"
+
+#~ msgid "Filament type is unknown which is required to perform this action. Please set target filament's informations."
+#~ msgstr "Bu eylemi gerçekleştirmek için gerekli olan filament tipi bilinmiyor. Lütfen hedef filamentin bilgilerini ayarlayın."
+
+#~ msgid ""
+#~ "Should not large than 100%.\n"
+#~ "Reset to defualt"
+#~ msgstr ""
+#~ "%100'den fazla olmamalıdır.\n"
+#~ "Varsayılana sıfırla"
+
+#, boost-format
+#~ msgid "Increase %1%g filament and %2% changes compared to optimal grouping."
+#~ msgstr "İdeal gruplamaya kıyasla %1%g filament ve %2% değişiklikleri artırın."
+
+#, boost-format
+#~ msgid "Increase %1%g filament and save %2% changes compared to optimal grouping."
+#~ msgstr "İdeal gruplamaya kıyasla %1%g filament artırın ve %2% değişiklik tasarrufu sağlayın."
+
+#, boost-format
+#~ msgid "Save %1%g filament and increase %2% changes compared to optimal grouping."
+#~ msgstr "Optimum gruplamaya kıyasla %1%g filament tasarrufu ve %2% değişiklik artışı."
+
+#, boost-format
+#~ msgid "Save %1%g filament and %2% changes compared to a printer with one nozzle."
+#~ msgstr "Tek nozullu bir yazıcıya kıyasla %1%g filament ve %2% değişiklik tasarrufu sağlar."
+
+#, boost-format
+#~ msgid "Save %1%g filament and increase %2% changes compared to a printer with one nozzle."
+#~ msgstr "Tek nozullu bir yazıcıya kıyasla %1% g filament tasarrufu ve %2% değişim artışı."
+
+#, boost-format
+#~ msgid "Increase %1%g filament and save %2% changes compared to a printer with one nozzle."
+#~ msgstr "Tek nozullu bir yazıcıya kıyasla %1%g filament artırın ve %2% değişiklik tasarrufu sağlayın."
+
+#~ msgid "Sync extruder infomation"
+#~ msgstr "Ekstrüder bilgilerini senkronize edin"
+
+#~ msgid "Clear my choice for synchronizing printer preset after loading the file."
+#~ msgstr "Dosyayı yükledikten sonra yazıcı ön ayarını senkronize etmek için seçimimi temizleyin."
+
+#~ msgid "Clear my choice for Load 3mf dialog settings."
+#~ msgstr "3mf Yükle pencere ayarlarındaki seçimimi kaldır."
+
+#~ msgid "Reminder During Slicing"
+#~ msgstr "Dilimleme Sırasında Hatırlat"
+
+#~ msgid "Automatic mode"
+#~ msgstr "Otomatik mod"
+
+#~ msgid "Clear my choice on the unsaved projects."
+#~ msgstr "Kaydedilmemiş projelerdeki seçimimi temizle."
+
+#~ msgid "Downloads"
+#~ msgstr "İndirilenler"
+
+#~ msgid "Media"
+#~ msgstr "Medya"
+
+#~ msgid "Dark Mode"
+#~ msgstr "Karanlık Mod"
+
+#~ msgid "Pop up to select filament grouping mode"
+#~ msgstr "Filament gruplama modunu seçmek için açılır pencere"
+
+#~ msgid "User Experience"
+#~ msgstr "Kullanıcı Deneyimi"
+
+#~ msgid "Develop Mode"
+#~ msgstr "Geliştirici Modu"
+
+#~ msgid "Home page and daily tips"
+#~ msgstr "Ana sayfa ve günlük ipuçları"
+
+#~ msgid "Show home page on startup"
+#~ msgstr "Başlangıçta ana sayfayı göster"
+
+#~ msgid "Sync settings"
+#~ msgstr "Ayarları senkronize et"
+
+#~ msgid "User sync"
+#~ msgstr "Kullanıcı senkronizasyonu"
+
+#~ msgid "Preset sync"
+#~ msgstr "Ön ayar senkronizasyonu"
+
+#~ msgid "Preferences sync"
+#~ msgstr "Tercihler senkronizasyonu"
+
+#~ msgid "View control settings"
+#~ msgstr "Kontrol ayarlarını görüntüle"
+
+#~ msgid "Rotate of view"
+#~ msgstr "Görünümü döndür"
+
+#~ msgid "Move of view"
+#~ msgstr "Görüşün taşınması"
+
+#~ msgid "Zoom of view"
+#~ msgstr "Görünümü yakınlaştır"
+
+#~ msgid "Mouse wheel reverses when zooming"
+#~ msgstr "Yakınlaştırma sırasında fare tekerleği ters dönüyor"
+
+#~ msgid "Copy paramters"
+#~ msgstr "Parametreleri kopyala"
+
+#~ msgid "Enable pressure advance, auto calibration result will be overwriten once enabled. Useless for Bambu Printer"
+#~ msgstr "Basınç avansını etkinleştirin, otomatik kalibrasyon sonucu etkinleştirildikten sonra üzerine yazılacaktır. Bambu Yazıcı için kullanışsız"
+
+#~ msgid "Unknown error occured"
+#~ msgstr "Bilinmeyen hata oluştu"
+
+#~ msgid "Helio: file succesfully uploaded"
+#~ msgstr "Helio: dosya başarıyla yüklendi"
+
+#, c-format, boost-format
+#~ msgid "Printer presets (%d/%d)"
+#~ msgstr "Yazıcı ön ayarları (%d/%d)"
+
+#, c-format, boost-format
+#~ msgid "Filament presets (%d/%d)"
+#~ msgstr "Filament ön ayarları (%d/%d)"
+
+#, c-format, boost-format
+#~ msgid "Process presets (%d/%d)"
+#~ msgstr "İşlem ön ayarları (%d/%d)"
+
+#~ msgid "Warning:old matrix has at least two parameters: mirroring, scaling, and rotation. If you continue editing, it may not be correct. Please dragging text or cancel using current pose, save and reedit again."
+#~ msgstr "Uyarı:eski matrisin en az iki parametresi vardır: yansıtma, ölçekleme ve döndürme. Düzenlemeye devam ederseniz, doğru olmayabilir. Lütfen metni sürükleyin veya mevcut pozu kullanarak iptal edin, kaydedin ve yeniden düzenleyin."
+
+#~ msgid "Please click the confirm button if you still want to proceed with printing."
+#~ msgstr "Hala yazdırma işlemine devam etmek istiyorsanız lütfen onayla düğmesine tıklayın."
+
+#~ msgid "Hide"
+#~ msgstr "Gizle"
+
+#~ msgid "Show"
+#~ msgstr "Göster"
 
 #~ msgid "Spiral mode only works when wall loops is 1, support is disabled, clumping detection by probing is disabled, top shell layers is 0, sparse infill density is 0, timelapse type is traditional and smoothing wall speed in z direction is false."
 #~ msgstr "Spiral modu yalnızca duvar döngüleri 1 olduğunda, destek devre dışı bırakıldığında, sondalama yoluyla kümelenme algılama devre dışı bırakıldığında, üst kabuk katmanları 0 olduğunda, seyrek dolgu yoğunluğu 0 olduğunda, zaman atlamalı tür geleneksel olduğunda ve z yönünde duvar hızını yumuşatma yanlış olduğunda çalışır."

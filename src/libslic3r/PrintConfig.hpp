@@ -349,7 +349,8 @@ enum NozzleVolumeType {
     nvtHighFlow,
     nvtHybrid,
     nvtTPUHighFlow,
-    nvtMaxNozzleVolumeType = nvtTPUHighFlow
+    nvtE3DHighFlow = 5,
+    nvtMaxNozzleVolumeType = nvtE3DHighFlow
 };
 
 enum FilamentMapMode {
@@ -384,6 +385,9 @@ inline bool is_auto_filament_map_mode(FilamentMapMode mode) {
     return mode == fmmAutoForFlush || mode == fmmAutoForMatch || mode == fmmAutoForQuality;
 }
 
+enum CounterboreHoleBridgingOption {
+    chbNone, chbBridges, chbFilled
+};
 extern std::string get_extruder_variant_string(ExtruderType extruder_type, NozzleVolumeType nozzle_volume_type);
 
 // 最基础的参数idx查找方法，遍历varint list寻找对应的idx
@@ -394,6 +398,8 @@ static std::set<NozzleVolumeType> get_valid_nozzle_volume_type() {
     for (int i = 0; i <= nvtMaxNozzleVolumeType; ++i) {
         auto t = static_cast<NozzleVolumeType>(i);
         if (t == nvtHybrid) continue;
+        // Skip the reserved gap between nvtTPUHighFlow (3) and nvtE3DHighFlow (5).
+        if (i > nvtTPUHighFlow && i < nvtE3DHighFlow) continue;
         type.insert(t);
     }
     return type;
@@ -470,6 +476,7 @@ static std::string get_bed_temp_1st_layer_key(const BedType type)
 }
 
 extern const std::vector<std::string> filament_extruder_override_keys;
+extern bool is_filament_extruder_override_key(const std::string &opt_key);
 
 // for parse extruder_ams_count
 extern std::vector<std::map<int, int>> get_extruder_ams_count(const std::vector<std::string> &strs);
@@ -511,6 +518,7 @@ CONFIG_OPTION_ENUM_DECLARE_STATIC_MAPS(PerimeterGeneratorType)
 CONFIG_OPTION_ENUM_DECLARE_STATIC_MAPS(TopOneWallType)
 CONFIG_OPTION_ENUM_DECLARE_STATIC_MAPS(ReduceInfillRetractionMode)
 CONFIG_OPTION_ENUM_DECLARE_STATIC_MAPS(FilamentMetalStickiness)
+CONFIG_OPTION_ENUM_DECLARE_STATIC_MAPS(CounterboreHoleBridgingOption)
 #undef CONFIG_OPTION_ENUM_DECLARE_STATIC_MAPS
 
 // Defines each and every confiuration option of Slic3r, including the properties of the GUI dialogs.
@@ -597,6 +605,10 @@ public:
     void                normalize_fdm();
     void                normalize_fdm_1();
     
+    // Repair nil/invalid filament_max_volumetric_speed entries carried by corrupted/legacy
+    // project files, before they propagate NaN into slicing speeds
+    void                repair_nil_filament_max_volumetric_speed();
+
     // Normalize FDM config based on print conditions (single/multi filament, print sequence, etc.)
     // Returns the list of config keys that were changed.
     // @param ori_values: Optional external storage for backup/restore of config values.
@@ -1024,6 +1036,7 @@ PRINT_CONFIG_CLASS_DEFINE(
     ((ConfigOptionFloat, bottom_shell_thickness))
     ((ConfigOptionFloat, bridge_angle))
     ((ConfigOptionFloat, bridge_flow))
+    ((ConfigOptionEnum<CounterboreHoleBridgingOption>, counterbore_hole_bridging))
     ((ConfigOptionFloatsNullable, overhang_totally_speed))
     ((ConfigOptionFloatsNullable, bridge_speed))
     ((ConfigOptionEnum<EnsureVerticalThicknessLevel>, ensure_vertical_shell_thickness))
@@ -1493,6 +1506,7 @@ PRINT_CONFIG_CLASS_DERIVED_DEFINE(
     ((ConfigOptionFloatsNullable,     nozzle_volume))
     ((ConfigOptionPoints,             start_end_points))
     ((ConfigOptionEnum<TimelapseType>,    timelapse_type))
+    ((ConfigOptionBool,               farthest_point_timelapse))
     ((ConfigOptionFloat,              default_jerk))
     ((ConfigOptionFloat,              outer_wall_jerk))
     ((ConfigOptionFloat,              inner_wall_jerk))

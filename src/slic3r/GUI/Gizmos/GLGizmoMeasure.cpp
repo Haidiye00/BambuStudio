@@ -607,7 +607,7 @@ void GLGizmoMeasure::on_render()
                 Vec3f  normal                       = Vec3f::Zero();
                 Vec3f  hit                          = Vec3f::Zero();
                 size_t facet                        = 0;
-                if (raycaster->unproject_on_mesh(mouse_position, world_tran.get_matrix(), camera, hit, normal, nullptr, &facet)) {
+                if (raycaster->unproject_on_mesh(mouse_position, world_tran.get_matrix(), camera, hit, normal, nullptr, &facet, false)) {
                     // Is this hit the closest to the camera so far?
                     double hit_squared_distance = (camera.get_position() - world_tran.get_matrix() * hit.cast<double>()).norm();
                     if (hit_squared_distance < closest_hit_distance) {
@@ -664,7 +664,6 @@ void GLGizmoMeasure::on_render()
             }
         }
     }
-    //const bool mouse_on_object = m_raycaster->unproject_on_mesh(mouse_position, Transform3d::Identity(), camera, position_on_model, normal_on_model, nullptr, &model_facet_idx);
     const bool is_hovering_on_feature = m_mode == EMode::PointSelection && m_hover_id != -1;
 
     if (m_mode == EMode::FeatureSelection || m_mode == EMode::PointSelection) {
@@ -1886,14 +1885,14 @@ void GLGizmoMeasure::show_selection_ui()
     if (m_selected_wrong_feature_waring_tip) {
         if (m_measure_mode == EMeasureMode::ONLY_ASSEMBLY) {
             if (m_assembly_mode == AssemblyMode::FACE_FACE) {
-                m_imgui->warning_text(_L("Warning:please select Plane's feature."));
+                m_imgui->warning_text(_L("Warning: Please select a Plane feature."));
             } else if (m_assembly_mode == AssemblyMode::POINT_POINT) {
-                m_imgui->warning_text(_L("Warning:please select Point's or Circle's feature."));
+                m_imgui->warning_text(_L("Warning: Please select a Point or Circle feature."));
             }
         }
     }
     if (m_measure_mode == EMeasureMode::ONLY_ASSEMBLY && m_hit_different_volumes.size() == 1) {
-        m_imgui->warning_text(_L("Warning:please select two different mesh."));
+        m_imgui->warning_text(_L("Warning: Please select two different meshes."));
     }
 }
 
@@ -1957,7 +1956,10 @@ void GLGizmoMeasure::show_distance_xyz_ui()
                 displacement[2] = m_buffered_distance[2] - distance[2];
                 distance[2]     = m_buffered_distance[2];
             }
-            if (displacement.norm() > 0.0f) { set_distance(m_same_model_object, displacement); }
+            if (displacement.norm() > 0.0f) {
+                set_distance(m_same_model_object, displacement);
+                update_measurement_result();
+            }
         }
     };
     const unsigned int max_measure_row_count = 2;
@@ -2047,6 +2049,7 @@ void GLGizmoMeasure::show_face_face_assembly_common() {
                                   m_is_dark_mode ? ImVec4(255 / 255.0f, 255 / 255.0f, 255 / 255.0f, 1.00f) : ImVec4(255 / 255.0f, 255 / 255.0f, 255 / 255.0f, 1.00f));
             if (m_imgui->button(_L("Center coincidence"))) {
                 set_to_center_coincidence(m_same_model_object);
+                update_measurement_result();
             }
             ImGui::PopStyleColor(4);
             ImGui::SameLine(set_to_center_coincidence_size + m_space_size * 2);
@@ -2055,7 +2058,10 @@ void GLGizmoMeasure::show_face_face_assembly_common() {
 
         m_imgui->disabled_begin(!action.can_set_to_parallel);
         {
-            if (m_imgui->button(_L("Parallel"))) { set_to_parallel(m_same_model_object); }
+            if (m_imgui->button(_L("Parallel"))) {
+                set_to_parallel(m_same_model_object);
+                update_measurement_result();
+            }
         }
         m_imgui->disabled_end();
     }

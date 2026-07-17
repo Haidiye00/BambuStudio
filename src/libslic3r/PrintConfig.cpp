@@ -6,6 +6,7 @@
 #include "FilamentMixer.hpp"
 
 #include <set>
+#include <cmath>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -79,6 +80,15 @@ const std::vector<std::string> filament_extruder_override_keys = {
     "filament_long_retractions_when_cut",
     "filament_retraction_distances_when_cut"
 };
+
+// Some filament override parameters are generated from filament_extruder_override_keys,
+// while filament_retract_length_nc is defined separately. Keep the generator list
+// unchanged and use this helper for behavior checks that need the full override set.
+bool is_filament_extruder_override_key(const std::string &opt_key)
+{
+    return std::find(filament_extruder_override_keys.begin(), filament_extruder_override_keys.end(), opt_key) != filament_extruder_override_keys.end() ||
+           opt_key == "filament_retract_length_nc";
+}
 
 const std::vector<std::string> filament_overhang_override_keys = {
     "filament_enable_overhang_speed",
@@ -491,7 +501,8 @@ static const t_config_enum_values s_keys_map_NozzleVolumeType = {
     { "Standard",  nvtStandard },
     { "High Flow", nvtHighFlow },
     { "TPU High Flow", nvtTPUHighFlow },
-    { "Hybrid", nvtHybrid}
+    { "Hybrid", nvtHybrid},
+    { "E3D High Flow", nvtE3DHighFlow }
 };
 CONFIG_OPTION_ENUM_DEFINE_STATIC_MAPS(NozzleVolumeType)
 
@@ -525,6 +536,13 @@ static const t_config_enum_values s_keys_map_FilamentMetalStickiness = {
     { "High",   fmsHigh }
 };
 CONFIG_OPTION_ENUM_DEFINE_STATIC_MAPS(FilamentMetalStickiness)
+
+static const t_config_enum_values s_keys_map_CounterboreHoleBridgingOption{
+    { "none", chbNone },
+    { "partiallybridge", chbBridges },
+    { "sacrificiallayer", chbFilled },
+};
+CONFIG_OPTION_ENUM_DEFINE_STATIC_MAPS(CounterboreHoleBridgingOption)
 
 //BBS
 std::string get_extruder_variant_string(ExtruderType extruder_type, NozzleVolumeType nozzle_volume_type)
@@ -694,6 +712,62 @@ NozzleVolumeType convert_to_nvt_type(const std::string &variant_str) {
     }
 
     return nvtHybrid;
+}
+
+void DynamicPrintConfig::repair_nil_filament_max_volumetric_speed()
+{
+    auto* speed_opt   = this->option<ConfigOptionFloats>("filament_max_volumetric_speed");
+    auto* variant_opt = this->option<ConfigOptionStrings>("filament_extruder_variant");
+    auto* self_opt    = this->option<ConfigOptionInts>("filament_self_index");
+    if (!speed_opt || !variant_opt || !self_opt)
+        return;
+
+    std::vector<double>& speeds = speed_opt->values;
+    const std::vector<std::string>& variants = variant_opt->values;
+    const std::vector<int>& self_idx = self_opt->values;
+    const size_t n = speeds.size();
+    if (variants.size() != n || self_idx.size() != n)
+        return; // arrays not aligned, skip repair to stay safe
+
+    // First valid (finite, positive) speed of `filament_id` whose variant satisfies `variant_pred`.
+    auto find_speed = [&](int filament_id, auto variant_pred) -> double {
+        for (size_t i = 0; i < n; ++i) {
+            if (self_idx[i] != filament_id) continue;
+            if (!variant_pred(variants[i])) continue;
+            if (std::isfinite(speeds[i]) && speeds[i] > 0.) return speeds[i];
+        }
+        return 0.;
+    };
+
+    for (size_t i = 0; i < n; ++i) {
+        if (std::isfinite(speeds[i]) && speeds[i] > 0.)
+            continue; // valid, nothing to repair
+
+        const int              filament_id  = self_idx[i];
+        const std::string&     slot_variant = variants[i];
+        const NozzleVolumeType nvt          = convert_to_nvt_type(slot_variant);
+
+        double filled = 0.;
+
+        // 1) DD High Flow: borrow the same nozzle volume type from the Bowden extruder of the same
+        if (nvt != nvtStandard) {
+            const std::string bowden_variant = get_extruder_variant_string(etBowden, nvt);
+            filled = find_speed(filament_id, [&](const std::string& v) { return v == bowden_variant; });
+        }
+
+        // 2) any Standard value of the same filament (Direct Drive / Bowden interchangeable):
+        //    Standard <= High Flow, so it is always safe to fill any remaining slot.
+        if (filled <= 0.)
+            filled = find_speed(filament_id, [&](const std::string& v) { return convert_to_nvt_type(v) == nvtStandard; });
+
+        // 3) safe floor when the filament has no usable value at all.
+        const double repaired = filled > 0. ? filled : 3.;
+
+        BOOST_LOG_TRIVIAL(warning) << __FUNCTION__
+            << boost::format(": repaired nil filament_max_volumetric_speed at index %1% (filament %2%, variant '%3%') -> %4% mm3/s")
+               % i % filament_id % slot_variant % repaired;
+        speeds[i] = repaired;
+    }
 }
 
 std::vector<std::string> save_extruder_nozzle_stats_to_string(const std::vector<std::map<NozzleVolumeType,int>>& extruder_nozzle_stats)
@@ -1256,6 +1330,24 @@ void PrintConfigDef::init_fff_params()
     def->mode = comAdvanced;
     def->set_default_value(new ConfigOptionFloat(1));
 
+    def = this->add("counterbore_hole_bridging", coEnum);
+    def->label = L("Bridge counterbore holes");
+    def->category = L("Quality");
+    def->tooltip  = L(
+        "This option creates bridges for counterbore holes, allowing them to be printed without support. Available modes include:\n"
+         "1. None: No bridge is created\n"
+         "2. Partially Bridged: Only a part of the unsupported area will be bridged\n"
+         "3. Sacrificial Layer: A full sacrificial bridge layer is created");
+    def->mode = comAdvanced;
+    def->enum_keys_map = &ConfigOptionEnum<CounterboreHoleBridgingOption>::get_enum_values();
+    def->enum_values.emplace_back("none");
+    def->enum_values.emplace_back("partiallybridge");
+    def->enum_values.emplace_back("sacrificiallayer");
+    def->enum_labels.emplace_back(L("None"));
+    def->enum_labels.emplace_back(L("Partially bridged"));
+    def->enum_labels.emplace_back(L("Sacrificial layer"));
+    def->set_default_value(new ConfigOptionEnum<CounterboreHoleBridgingOption>(chbNone));
+
     def = this->add("top_solid_infill_flow_ratio", coFloats);
     def->label = L("Top surface flow ratio");
     def->category = L("Quality");
@@ -1688,7 +1780,7 @@ void PrintConfigDef::init_fff_params()
     def->tooltip = L("Set special auxiliary cooling fan for the first certain layers.");
     def->sidetext = L("layers");
     def->min = 0;
-    def->max = 1000;
+    def->max = 100000;
     def->mode = comSimple;
     def->set_default_value(new ConfigOptionInts { 1 });
 
@@ -1696,7 +1788,7 @@ void PrintConfigDef::init_fff_params()
     def->label = L("Full fan speed at layer");
     def->tooltip = L("Auxiliary fan speed will be ramped up linearly from layer \"For the first\" to maximum at layer \"Full fan speed at layer\". \"Full fan speed at layer\" will be ignored if lower than \"For the first\", in which case the fan will be running at maximum allowed speed at layer \"For the first\" + 1.");
     def->min = 0;
-    def->max = 1000;
+    def->max = 100000;
     def->mode = comSimple;
     def->set_default_value(new ConfigOptionInts { 0 });
 
@@ -1706,7 +1798,7 @@ void PrintConfigDef::init_fff_params()
                      "to get better build plate adhesion and used for auto cooling function");
     def->sidetext = L("layers");
     def->min = 0;
-    def->max = 1000;
+    def->max = 100000;
     def->mode = comSimple;
     def->set_default_value(new ConfigOptionInts { 1 });
 
@@ -2074,7 +2166,7 @@ void PrintConfigDef::init_fff_params()
 
     def = this->add("enable_pressure_advance", coBools);
     def->label = L("Enable pressure advance");
-    def->tooltip = L("Enable pressure advance, auto calibration result will be overwriten once enabled. Useless for Bambu Printer");
+    def->tooltip = L("Enable pressure advance, auto calibration result will be overwritten once enabled. Useless for Bambu Printer");
     def->set_default_value(new ConfigOptionBools{ false });
 
     def = this->add("pressure_advance", coFloats);
@@ -3104,7 +3196,7 @@ void PrintConfigDef::init_fff_params()
     //               "\"full_fan_speed_layer\" will be ignored if lower than \"close_fan_the_first_x_layers\", in which case "
     //               "the fan will be running at maximum allowed speed at layer \"close_fan_the_first_x_layers\" + 1.");
     def->min = 0;
-    def->max = 1000;
+    def->max = 100000;
     def->mode = comSimple;
     def->set_default_value(new ConfigOptionInts { 0 });
 
@@ -3633,7 +3725,7 @@ void PrintConfigDef::init_fff_params()
     def->category = L("Extruders");
     def->tooltip = L("Filament to print internal sparse infill.");
     def->min = 0;
-    def->mode     = comDevelop;
+    def->mode     = comAdvanced;
     def->set_default_value(new ConfigOptionInt(0));
 
     def = this->add("sparse_infill_line_width", coFloat);
@@ -4265,7 +4357,7 @@ void PrintConfigDef::init_fff_params()
     def->category = L("Extruders");
     def->tooltip = L("Filament to print walls");
     def->min = 0;
-    def->mode = comDevelop;
+    def->mode = comAdvanced;
     def->set_default_value(new ConfigOptionInt(0));
 
     def = this->add("inner_wall_line_width", coFloat);
@@ -4552,10 +4644,12 @@ void PrintConfigDef::init_fff_params()
     def->enum_values.push_back(L("High Flow"));
     def->enum_values.push_back(L("Hybrid"));
     def->enum_values.push_back(L("TPU High Flow"));
+    def->enum_values.push_back(L("E3D High Flow"));
     def->enum_labels.push_back(L("Standard"));
     def->enum_labels.push_back(L("High Flow"));
     def->enum_labels.push_back(L("Hybrid"));
     def->enum_labels.push_back(L("TPU High Flow"));
+    def->enum_labels.push_back(L("E3D High Flow"));
     def->mode = comSimple;
     def->set_default_value(new ConfigOptionEnumsGeneric{ NozzleVolumeType::nvtStandard });
 
@@ -4567,10 +4661,12 @@ void PrintConfigDef::init_fff_params()
     def->enum_values.push_back(L("High Flow"));
     def->enum_values.push_back(L("Hybrid"));
     def->enum_values.push_back(L("TPU High Flow"));
+    def->enum_values.push_back(L("E3D High Flow"));
     def->enum_labels.push_back(L("Standard"));
     def->enum_labels.push_back(L("High Flow"));
     def->enum_labels.push_back(L("Hybrid"));
     def->enum_labels.push_back(L("TPU High Flow"));
+    def->enum_labels.push_back(L("E3D High Flow"));
     def->mode = comDevelop;
     def->set_default_value(new ConfigOptionEnumsGeneric{ NozzleVolumeType::nvtStandard });
 
@@ -4621,10 +4717,12 @@ void PrintConfigDef::init_fff_params()
     def->enum_keys_map = &ConfigOptionEnum<NozzleVolumeType>::get_enum_values();
     def->enum_values.push_back(L("Standard"));
     def->enum_values.push_back(L("High Flow"));
-    def->enum_values.push_back("TPU High Flow");
+    def->enum_values.push_back(L("TPU High Flow"));
+    def->enum_values.push_back(L("E3D High Flow"));
     def->enum_labels.push_back(L("Standard"));
     def->enum_labels.push_back(L("High Flow"));
     def->enum_labels.push_back(L("TPU High Flow"));
+    def->enum_labels.push_back(L("E3D High Flow"));
     def->mode = comDevelop;
     def->set_default_value(new ConfigOptionEnumsGeneric{ NozzleVolumeType::nvtStandard });
 
@@ -4939,7 +5037,7 @@ void PrintConfigDef::init_fff_params()
     def->category = L("Extruders");
     def->tooltip = L("Filament to print solid infill");
     def->min = 0;
-    def->mode = comDevelop;
+    def->mode = comAdvanced;
     def->set_default_value(new ConfigOptionInt(0));
 
     def = this->add("internal_solid_infill_line_width", coFloat);
@@ -5004,6 +5102,14 @@ void PrintConfigDef::init_fff_params()
     def->enum_labels.emplace_back(L("Smooth"));
     def->mode = comSimple;
     def->set_default_value(new ConfigOptionEnum<TimelapseType>(tlTraditional));
+
+    def = this->add("farthest_point_timelapse", coBool);
+    def->label = L("Farthest point timelapse");
+    def->tooltip = L("When enabled, the timelapse snapshot is taken at the farthest point from camera "
+                     "instead of traveling to the wipe tower or excess chute. "
+                     "Only effective in traditional timelapse mode on non-I3 printers.");
+    def->mode = comSimple;
+    def->set_default_value(new ConfigOptionBool(false));
 
     def = this->add("standby_temperature_delta", coInt);
     def->label = L("Temperature variation");
@@ -9027,6 +9133,7 @@ void DynamicPrintConfig::update_diff_values_to_child_config(DynamicPrintConfig& 
                 BOOST_LOG_TRIVIAL(debug) << __FUNCTION__ << boost::format(" change key %1% from base_value %2% to child's value %3%")
                         %opt %(opt_src->serialize()) %(opt_target->serialize());
                 if (opt_target->is_scalar()
+                    || is_filament_extruder_override_key(opt)
                     || ((key_set1.find(opt) == key_set1.end()) && (key_set2.empty() || (key_set2.find(opt) == key_set2.end())))) {
                     //nothing to do, keep the original one
                     opt_src->set(opt_target);
@@ -9738,6 +9845,11 @@ CLIMiscConfigDef::CLIMiscConfigDef()
     def->label = L("Autosave");
     def->tooltip = L("Automatically export current configuration to the specified file.");
 */
+
+    def = this->add("datadir", coString);
+    def->label = "Configuration data directory";
+    def->tooltip = "Use and store all program settings at the given directory instead of the default location.";
+    def->cli_params = "dir";
 
     def = this->add("outputdir", coString);
     def->label = "Output directory";

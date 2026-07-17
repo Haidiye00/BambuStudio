@@ -197,9 +197,9 @@ wxString Slic3r::get_stage_string(int stage)
     case 35:
         return _L("Pause (nozzle clog)");
     case 36:
-        return _L("Measuring motion percision");
+        return _L("Measuring motion precision");
     case 37:
-        return _L("Enhancing motion percision");
+        return _L("Enhancing motion precision");
     case 38:
         return _L("Measure motion accuracy");
     case 39:
@@ -388,6 +388,10 @@ static wxString _generate_nozzle_id(NozzleVolumeType nozzle_type, const std::str
     }
     case NozzleVolumeType::nvtTPUHighFlow: {
         nozzle_id += "U";
+        break;
+    }
+    case NozzleVolumeType::nvtE3DHighFlow: {
+        nozzle_id += "B";
         break;
     }
     default:
@@ -1664,7 +1668,8 @@ int MachineObject::command_ams_calibrate(int ams_id)
     return this->publish_gcode(gcode_cmd);
 }
 
-int MachineObject::command_ams_filament_settings(int ams_id, int slot_id, std::string filament_id, std::string setting_id, std::string tray_color, std::string tray_type, int nozzle_temp_min, int nozzle_temp_max)
+int MachineObject::command_ams_filament_settings(int ams_id, int slot_id, std::string filament_id, std::string setting_id, std::string tray_color, std::string tray_type,
+                                                 int nozzle_temp_min, int nozzle_temp_max, const std::vector<std::string>& tray_colors, int tray_ctype)
 {
     int tag_tray_id = 0;
     int tag_ams_id  = ams_id;
@@ -1689,6 +1694,10 @@ int MachineObject::command_ams_filament_settings(int ams_id, int slot_id, std::s
     j["print"]["nozzle_temp_min"]   = nozzle_temp_min;
     j["print"]["nozzle_temp_max"]   = nozzle_temp_max;
     j["print"]["tray_type"]         = tray_type;
+    if (!tray_colors.empty()) {
+        j["print"]["cols"]  = tray_colors;
+        j["print"]["ctype"] = tray_ctype;
+    }
 
     return this->publish_json(j);
 }
@@ -2955,7 +2964,7 @@ int MachineObject::parse_json(std::string tunnel, std::string payload, bool key_
                         if (jj["errno"].is_number()) {
                             wxString text;
                             if (jj["errno"].get<int>() == -2) {
-                                 text = _L("Low temperature filament(PLA/PETG/TPU) is loaded in the extruder.In order to avoid extruder clogging,it is not allowed to set the chamber temperature.");
+                                 text = _L("Low temperature filament (PLA/PETG/TPU) is loaded in the extruder. In order to avoid extruder clogging, it is not allowed to set the chamber temperature.");
                             }
                             else if (jj["errno"].get<int>() == -4) {
                                  text = _L("When you set the chamber temperature below 40\u2103, the chamber temperature control will not be activated. And the target chamber temperature will automatically be set to 0\u2103.");
@@ -4103,8 +4112,7 @@ DevAmsTray MachineObject::parse_vt_tray(json vtray)
 
     if (vt_tray.hold_count > 0) {
         vt_tray.hold_count--;
-    }
-    else {
+    } else {
         if (vtray.contains("tag_uid"))
             vt_tray.tag_uid = vtray["tag_uid"].get<std::string>();
         else
@@ -4171,6 +4179,10 @@ DevAmsTray MachineObject::parse_vt_tray(json vtray)
             vt_tray.uuid = vtray["tray_uuid"].get<std::string>();
         else
             vt_tray.uuid = "0";
+        if (vtray.contains("tray_id_name"))
+            vt_tray.tray_id_name = vtray["tray_id_name"].get<std::string>();
+        else
+            vt_tray.tray_id_name = "";
 
         if (vtray.contains("cali_idx"))
             vt_tray.cali_idx = vtray["cali_idx"].get<int>();
@@ -4211,6 +4223,13 @@ DevAmsTray MachineObject::parse_vt_tray(json vtray)
         }
         else {
             vt_tray.remain = -1;
+        }
+
+        if (vtray.contains("remain_g")) {
+            vt_tray.remain_g = vtray["remain_g"].get<int>();
+        }
+        else {
+            vt_tray.remain_g = -1;
         }
     }
 
@@ -4394,6 +4413,7 @@ void MachineObject::parse_new_info(json print)
         is_support_model_internal_storage = (get_flag_bits_no_border(fun2, 17) == 1);
         is_support_check_track_switch_match_slice_printer = (get_flag_bits_no_border(fun2, 19) == 1);
         ams_preload_version = static_cast<int>(get_flag_bits_no_border(fun2, 21, 2));
+        is_support_filament_manual_multi_color = (get_flag_bits_no_border(fun2, 23) == 1);
 
         if (DevPrinterConfigUtil::support_print_check_firmware_for_tpu_left(printer_type)) {
             m_firmware_support_print_tpu_left = DevUtil::get_flag_bits_no_border(fun2, 7) == 1;

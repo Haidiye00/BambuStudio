@@ -19,6 +19,8 @@
 #include "EmbossShape.hpp"
 //BBS: add bbs 3mf
 #include "Format/bbs_3mf.hpp"
+#include "libslic3r/Format/AssemblyStepsJson.hpp"
+#include "libslic3r/Format/AssemblyTreeJson.hpp"
 //BBS: add step
 #include "Format/STEP.hpp"
 //BBS: add stl
@@ -989,6 +991,11 @@ public:
     t_model_material_id material_id() const { return m_material_id; }
     void                set_material_id(t_model_material_id material_id);
     void                reset_extra_facets();
+    // BBS: best-effort paint preservation across mesh-rebuilding operations
+    // (repair/simplify/smooth). Replaces the mesh, then re-projects all four
+    // paint layers from the OLD mesh onto the new one by nearest-surface lookup.
+    // Approximate: a remeshed surface has no exact face correspondence.
+    void                set_mesh_keep_paint(TriangleMesh &&mesh);
     ModelMaterial*      material() const;
     void                set_material(t_model_material_id material_id, const ModelMaterial &material);
     // Extract the current extruder ID based on this ModelVolume's config and the parent ModelObject's config.
@@ -1029,6 +1036,9 @@ public:
     void                calculate_convex_hull();
     const TriangleMesh& get_convex_hull() const;
     const std::shared_ptr<const TriangleMesh>& get_convex_hull_shared_ptr() const { return m_convex_hull; }
+    // Share an already-computed convex hull (e.g. rebind the assembly-view volume to the prepare-side
+    // hull after a prepare-side mesh edit) without recomputing it.
+    void                set_convex_hull_shared_ptr(const std::shared_ptr<const TriangleMesh> &hull) { m_convex_hull = hull; }
     //BBS: add convex_hell_2d related logic
     const Polygon& get_convex_hull_2d(const Transform3d &trafo_instance) const;
     void invalidate_convex_hull_2d()
@@ -1046,6 +1056,13 @@ public:
     const Geometry::Transformation& get_transformation() const { return m_transformation; }
     void                            set_transformation(const Geometry::Transformation &transformation);
     void                            set_transformation(const Transform3d &trafo);
+
+    // Per-volume assemble transformation, mirrors ModelInstance::m_assemble_transformation.
+    const Geometry::Transformation& get_assemble_transformation() const;
+    void                            set_assemble_transformation(const Geometry::Transformation &transformation);
+    void                            set_assemble_from_transform(const Transform3d &transform);
+    void                            set_assemble_offset(const Vec3d &offset);
+    bool                            is_assemble_initialized() const { return m_assemble_initialized; }
 
     const Vec3d& get_offset() const { return m_transformation.get_offset(); }
     double get_offset(Axis axis) const { return m_transformation.get_offset(axis); }
@@ -1099,6 +1116,15 @@ public:
         m_origin_mesh_or_vertice_render = is_mesh;
     }
     bool get_origin_mesh_or_vertice_render()const {return m_origin_mesh_or_vertice_render;}
+
+    // Stable cross-model logical-part identity (assembly view independent model). Persisted in 3mf.
+    const std::string &part_guid() const { return m_part_guid; }
+    void               set_part_guid(const std::string &guid) { m_part_guid = guid; }
+    // Lazily assign a stable part GUID if none has been set yet, then return it.
+    const std::string &ensure_part_guid(bool force = false) const;
+    // Assembly-side only: the prepare-side part_guid this volume references. Empty in the prepare model.
+    const std::string& assembly_src_guid() const { return m_assembly_src_guid; }
+    void               set_assembly_src_guid(const std::string &guid) { m_assembly_src_guid = guid; }
 protected:
 	friend class Print;
     friend class SLAPrint;
@@ -1129,6 +1155,15 @@ private:
     mutable Transform3d                 m_cached_trans_matrix{Transform3d::Identity()}; // BBS, used for convex_hell_2d acceleration
     mutable Polygon                     m_cached_2d_polygon;   //BBS, used for convex_hell_2d acceleration
     Geometry::Transformation        	m_transformation;
+    // BBS: per-volume assemble transformation, mirrors ModelInstance::m_assemble_transformation.
+    mutable Geometry::Transformation    m_assemble_transformation;
+    bool                                m_assemble_initialized{false};
+
+    // Stable, persisted cross-model logical-part identity (assembly view independent model).
+    // Lazily generated; equal on a prepare-side volume and its assembly-side counterpart.
+    mutable std::string                 m_part_guid;
+    // Assembly-side only: the prepare-side part_guid this volume references. Empty in the prepare model.
+    std::string                         m_assembly_src_guid;
 
     TextInfo m_text_info;
 
@@ -1195,11 +1230,14 @@ private:
         ObjectBase(other),
         name(other.name), source(other.source), m_mesh(other.m_mesh), m_convex_hull(other.m_convex_hull),
         config(other.config), m_type(other.m_type), object(object), m_transformation(other.m_transformation)
+        , m_assemble_transformation(other.m_assemble_transformation)
+        , m_assemble_initialized(other.m_assemble_initialized)
         , supported_facets(other.supported_facets)
         , fuzzy_skin_facets(other.fuzzy_skin_facets)
         , seam_facets(other.seam_facets)
         , mmu_segmentation_facets(other.mmu_segmentation_facets)
         , m_text_info(other.m_text_info), emboss_shape(other.emboss_shape)
+        , m_part_guid(other.m_part_guid), m_assembly_src_guid(other.m_assembly_src_guid)
     {
 		assert(this->id().valid());
         assert(this->config.id().valid());
@@ -1223,6 +1261,8 @@ private:
     // Providing a new mesh, therefore this volume will get a new unique ID assigned.
     ModelVolume(ModelObject *object, const ModelVolume &other, const TriangleMesh &&mesh) :
         name(other.name), source(other.source), m_mesh(new TriangleMesh(std::move(mesh))), config(other.config), m_type(other.m_type), object(object), m_transformation(other.m_transformation),
+        m_assemble_transformation(other.m_assemble_transformation),
+        m_assemble_initialized(other.m_assemble_initialized),
         emboss_shape(other.emboss_shape)
     {
 		assert(this->id().valid());
@@ -1274,7 +1314,7 @@ private:
         // BBS: add backup, check modify
         bool mesh_changed = false;
         auto tr = m_transformation;
-        ar(name, source, m_mesh, m_type, m_material_id, m_transformation, m_is_splittable, has_convex_hull, m_text_info, cut_info);
+        ar(name, source, m_mesh, m_type, m_material_id, m_transformation, m_is_splittable, has_convex_hull, m_text_info, cut_info, m_assemble_transformation, m_assemble_initialized, m_part_guid, m_assembly_src_guid);
         mesh_changed |= !(tr == m_transformation);
         auto t = supported_facets.timestamp();
         cereal::load_by_value(ar, supported_facets);
@@ -1303,7 +1343,7 @@ private:
 	}
 	template<class Archive> void save(Archive &ar) const {
 		bool has_convex_hull = m_convex_hull.get() != nullptr;
-        ar(name, source, m_mesh, m_type, m_material_id, m_transformation, m_is_splittable, has_convex_hull, m_text_info, cut_info);
+        ar(name, source, m_mesh, m_type, m_material_id, m_transformation, m_is_splittable, has_convex_hull, m_text_info, cut_info, m_assemble_transformation, m_assemble_initialized, m_part_guid, m_assembly_src_guid);
         cereal::save_by_value(ar, supported_facets);
         cereal::save_by_value(ar, fuzzy_skin_facets);
         cereal::save_by_value(ar, seam_facets);
@@ -1590,6 +1630,11 @@ public:
     ModelMaterialMap    materials;
     // Objects are owned by a model. Each model may have multiple instances, each instance having its own transformation (shift, scale, rotation).
     ModelObjectPtrs     objects;
+
+    std::string                         step_import_path;
+    std::vector<StepImportTreeNode>     step_import_tree_nodes;
+    // Debug-only marker: true for the independent assembly-view model (a_model), false for the prepare model.
+    bool                                is_assembly_model = false;
     // Wipe tower object.
     ModelWipeTower	wipe_tower;
     // BBS static members store extruder parameters and speed map of all models
@@ -1626,6 +1671,30 @@ public:
         //BBS tips: clean design user id when set designer
         design_info->DesignerUserId = designer_user_id;
     }
+
+    const AssemblyTreeData& get_assembly_tree_data() const { return m_assembly_tree_data; }
+    AssemblyTreeData&       get_assembly_tree_data()       { return m_assembly_tree_data; }
+    void                    set_assembly_tree_data(AssemblyTreeData data) { m_assembly_tree_data = std::move(data); }
+
+    const std::string& get_assembly_tree_json_str() const { return m_assembly_tree_json_str; }
+    std::string&       get_assembly_tree_json_str()       { return m_assembly_tree_json_str; }
+    void               set_assembly_tree_json_str(std::string json_str) { m_assembly_tree_json_str = std::move(json_str); }
+
+
+    const AssemblyStepsTreeData& get_assembly_steps_tree_data() const { return m_assembly_steps_tree_data; }
+    AssemblyStepsTreeData&       get_assembly_steps_tree_data()       { return m_assembly_steps_tree_data; }
+    void                         set_assembly_steps_tree_data(AssemblyStepsTreeData data) { m_assembly_steps_tree_data = std::move(data); }
+
+    const std::string& get_assembly_steps_json_str() const { return m_assembly_steps_json_str; }
+    std::string&       get_assembly_steps_json_str()       { return m_assembly_steps_json_str; }
+    void               set_assembly_steps_json_str(std::string json_str) { m_assembly_steps_json_str = std::move(json_str); }
+
+    // Independent assembly-model object graph, serialized as JSON (no geometry: each volume references a
+    // prepare-side part by assembly_src_guid and the mesh is rebound on load). Persisted to 3mf as a
+    // standalone section so assembly-view structural state (deletes / appends / poses) survives reload.
+    const std::string& get_assembly_model_json_str() const { return m_assembly_model_json_str; }
+    std::string&       get_assembly_model_json_str()       { return m_assembly_model_json_str; }
+    void               set_assembly_model_json_str(std::string json_str) { m_assembly_model_json_str = std::move(json_str); }
 
     // Extensions for color print
     // CustomGCode::Info custom_gcode_per_print_z;
@@ -1797,6 +1866,12 @@ private:
     bool need_backup = false;
     std::map<int, int> object_backup_id_map; // ObjectId -> backup id;
     int next_object_backup_id = 1;
+    // Backing storage for the public accessors declared above. Must remain private so
+    AssemblyTreeData      m_assembly_tree_data;
+    std::string           m_assembly_tree_json_str;
+    AssemblyStepsTreeData m_assembly_steps_tree_data;
+    std::string           m_assembly_steps_json_str;
+    std::string           m_assembly_model_json_str;
 };
 
 #undef OBJECTBASE_DERIVED_COPY_MOVE_CLONE

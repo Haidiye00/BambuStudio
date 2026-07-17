@@ -3008,6 +3008,7 @@ void TabPrint::build()
         optgroup->append_single_option_line("is_infill_first","parameter/quality-advance-settings");
         optgroup->append_single_option_line("bridge_flow","parameter/bridge");
         optgroup->append_single_option_line("thick_bridges","parameter/bridge");
+        optgroup->append_single_option_line("counterbore_hole_bridging","parameter/bridge");
         optgroup->append_single_option_line("print_flow_ratio");
         optgroup->append_single_option_line("top_solid_infill_flow_ratio","parameter/quality-advance-settings");
         optgroup->append_single_option_line("initial_layer_flow_ratio","parameter/quality-advance-settings");
@@ -4398,9 +4399,6 @@ void TabFilament::build()
             }
             else if (opt_key == "nozzle_temperature_initial_layer") {
                 m_config_manipulation.check_nozzle_temperature_initial_layer_range(&filament_config);
-            }
-            else if (opt_key == "chamber_temperatures") {
-                m_config_manipulation.check_chamber_temperature(&filament_config);
             }
 
             on_value_change(opt_key, value);
@@ -6504,6 +6502,23 @@ bool Tab::may_discard_current_dirty_preset(PresetCollection* presets /*= nullptr
 {
     if (presets == nullptr) presets = m_presets;
 
+    // The unsaved-changes dialog builds its list of modified options from the options searcher,
+    // which is filtered to the current view mode. In Simple mode that hides modified advanced
+    // options, so they would be silently dropped when transferring changes to another preset.
+    // Temporarily rebuild the searcher at comAdvanced so all modified options are compared and
+    // transferable, then restore it to the current view mode on the way out.
+    //
+    // We reuse the global (sidebar) searcher on purpose rather than a local instance: the
+    // searcher only turns a config option into a displayable row if it has a group/category,
+    // and that group/category map is filled incrementally by the live settings tabs (see
+    // OptionsSearcher::add_key). A freshly constructed local searcher would have an empty map
+    // and therefore build an empty tree. The RAII guard guarantees the view-mode searcher is
+    // restored on every exit path (cancel / save / transfer / force).
+    struct SearcherModeGuard {
+        ~SearcherModeGuard() { wxGetApp().sidebar().update_searcher(); }
+    } searcher_mode_guard;
+    wxGetApp().sidebar().update_searcher(comAdvanced);
+
     UnsavedChangesDialog dlg(m_type, presets, new_printer_name, no_transfer);
 
     auto handle_save_action = [&dlg, this, presets]() {
@@ -6948,6 +6963,15 @@ void Tab::save_preset(std::string name /*= ""*/, bool detach, bool save_to_proje
     Preset* new_preset = m_presets->find_preset(name, false);
     if (new_preset) {
         exist_preset = true;
+    }
+
+    // a user preset with a project embedded preset as parent is not allowed
+    if (!exist_preset && !save_to_project && m_presets->get_edited_preset().is_project_embedded) {
+        MessageDialog dlg(m_parent,
+                          _L("The current preset is embedded in the 3MF project file. Please save changes directly.  'Save as new' is not supported for preset inside project."),
+                          _L("Unable to save preset"), wxICON_WARNING | wxOK);
+        dlg.ShowModal();
+        return;
     }
 
     // Save the preset into Slic3r::data_dir / presets / section_name / preset_name.ini
@@ -7834,7 +7858,7 @@ void Tab::sync_excluder()
         }
     }
     if (config_to_apply.empty()) {
-        MessageDialog md(wxGetApp().plater(), _L("No modifications need to be copied."), _L("Copy paramters"), wxICON_INFORMATION | wxOK);
+        MessageDialog md(wxGetApp().plater(), _L("No modifications need to be copied."), _L("Copy parameters"), wxICON_INFORMATION | wxOK);
         md.ShowModal();
         return;
     }
@@ -7842,7 +7866,7 @@ void Tab::sync_excluder()
     std::string pt = m_preset_bundle->printers.get_edited_preset().get_printer_type(m_preset_bundle);
     std::string active_nozzle_name = DevPrinterConfigUtil::get_toolhead_display_name(pt, active_index, ToolHeadComponent::Nozzle, ToolHeadNameCase::LowerCase);
     std::string other_nozzle_name  = DevPrinterConfigUtil::get_toolhead_display_name(pt, 1 - active_index, ToolHeadComponent::Nozzle, ToolHeadNameCase::LowerCase);
-    wxString title  = wxString::Format(_L("Modify paramters of %s"), _L(active_nozzle_name));
+    wxString title  = wxString::Format(_L("Modify parameters of %s"), _L(active_nozzle_name));
     wxString header = wxString::Format(_L("Do you want to modify the following parameters of the %s to that of the %s?"),
                                        _L(active_nozzle_name), _L(other_nozzle_name));
     UnsavedChangesDialog dlg(title, header, &config_origin, from_index, dest_index, active_index == 0, active_nozzle);
@@ -7889,11 +7913,21 @@ void Tab::update_nozzle_status_display()
     Freeze();
     m_nozzle_status_sizer->Clear(true);
 
+    // Re-layout the container after the sizer contents have been rebuilt, and unfreeze, on
+    // every exit path. Without the layout, newly created child controls keep their default
+    // (0,0) position until the next layout pass; on macOS the native wxStaticText paints
+    // there immediately, so the reminder text briefly shows up at the top of the dialog
+    // instead of in the nozzle status row.
+    ScopeGuard relayout_and_thaw([this]() {
+        if (m_variant_sizer) m_variant_sizer->Layout();
+        m_nozzle_status_sizer->Layout();
+        Thaw();
+    });
+
     const Preset &current_printer  = m_preset_bundle->printers.get_selected_preset();
     auto extruder_max_nozzle_count = current_printer.config.option<ConfigOptionIntsNullable>("extruder_max_nozzle_count");
     bool has_multiple_nozzle       = std::any_of(extruder_max_nozzle_count->values.begin(), extruder_max_nozzle_count->values.end(), [](int i) { return i > 1; });
     if (!has_multiple_nozzle) {
-        Thaw();
         return;
     }
 
@@ -7907,7 +7941,6 @@ void Tab::update_nozzle_status_display()
     if (m_preset_bundle->get_printer_extruder_count() > 1)
         l_nozzles = collect_nozzles(DEPUTY_EXTRUDER_ID, extruder_type, flow_type, connected);
     if (!connected) {
-        Thaw();
         return;
     }
     if (r_nozzles.empty() && l_nozzles.empty()) {
@@ -7919,7 +7952,6 @@ void Tab::update_nozzle_status_display()
         reminder_text->SetForegroundColour(m_modified_label_clr);
         m_nozzle_status_sizer->Add(reminder_text, 1, wxALIGN_CENTER_VERTICAL);
 
-        Thaw();
         return;
     }
 
@@ -7964,7 +7996,6 @@ void Tab::update_nozzle_status_display()
             create_nozzle_button(name);
         }
     }
-    Thaw();
 }
 
 std::vector<DevNozzle> Tab::collect_nozzles(int extruder_id, ExtruderType ext_type, NozzleFlowType flow_type, bool& connected)
@@ -8089,8 +8120,13 @@ void Page::update_visibility(ConfigOptionMode mode, bool update_contolls_visibil
 #ifdef __WXMSW__
     if (!m_show) return;
     // BBS: fix field control position
-    wxTheApp->CallAfter([this]() {
-        for (auto group : m_optgroups) {
+    // Capture a weak_ptr so the deferred call is skipped if the Page is
+    // destroyed (e.g. tab rebuilds its pages on a preset/printer switch)
+    // before this event is dispatched, avoiding a use-after-free.
+    wxTheApp->CallAfter([weak_self = weak_from_this()]() {
+        auto self = weak_self.lock();
+        if (!self) return;
+        for (auto group : self->m_optgroups) {
             if (group->custom_ctrl) group->custom_ctrl->fixup_items_positions();
         }
     });
@@ -8128,8 +8164,14 @@ void Page::activate(ConfigOptionMode mode, std::function<void()> throw_if_cancel
 
 #ifdef __WXMSW__
     // BBS: fix field control position
-    wxTheApp->CallAfter([this]() {
-        for (auto group : m_optgroups) {
+    // Capture a weak_ptr so the deferred call is skipped if the Page is
+    // destroyed (e.g. tab rebuilds its pages on a preset/printer switch)
+    // before this event is dispatched, avoiding a use-after-free.
+    std::weak_ptr<Page> weak_self = weak_from_this();
+    wxTheApp->CallAfter([weak_self]() {
+        auto self = weak_self.lock();
+        if (!self) return;
+        for (auto group : self->m_optgroups) {
             if (group->custom_ctrl)
                 group->custom_ctrl->fixup_items_positions();
         }

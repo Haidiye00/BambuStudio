@@ -172,6 +172,9 @@ const std::string BBS_MODEL_CONFIG_FILE = "Metadata/model_settings.config";
 const std::string BBS_MODEL_CONFIG_RELS_FILE = "Metadata/_rels/model_settings.config.rels";
 const std::string SLICE_INFO_CONFIG_FILE = "Metadata/slice_info.config";
 const std::string FILAMENT_SEQUENCE_FILE = "Metadata/filament_sequence.json";
+const std::string ASSEMBLY_TREE_FILE = "Metadata/assembly_tree.json";
+const std::string ASSEMBLY_STEP_JSON_FILE    = "Metadata/assembly_step.json";
+const std::string ASSEMBLY_MODEL_FILE        = "Metadata/assembly_model.json";
 const std::string BBS_LAYER_HEIGHTS_PROFILE_FILE = "Metadata/layer_heights_profile.txt";
 const std::string LAYER_CONFIG_RANGES_FILE = "Metadata/layer_config_ranges.xml";
 const std::string BRIM_EAR_POINTS_FILE = "Metadata/brim_ear_points.txt";
@@ -289,6 +292,8 @@ static constexpr const char* OBJECTID_ATTR = "objectid";
 static constexpr const char* TRANSFORM_ATTR = "transform";
 // BBS
 static constexpr const char* OFFSET_ATTR = "offset";
+// BBS: volume index inside an <assemble_item>.
+static constexpr const char* VOLUMEID_ATTR = "volume_id";
 static constexpr const char* PRINTABLE_ATTR = "printable";
 static constexpr const char* INSTANCESCOUNT_ATTR = "instances_count";
 static constexpr const char* CUSTOM_SUPPORTS_ATTR = "paint_supports";
@@ -361,6 +366,9 @@ static constexpr const char* SOURCE_IN_INCHES    = "source_in_inches";
 static constexpr const char* SOURCE_IN_METERS    = "source_in_meters";
 
 static constexpr const char* MESH_SHARED_KEY = "mesh_shared";
+// Assembly view independent-model: stable cross-model logical-part identity.
+static constexpr const char* PART_GUID_KEY = "uuid";
+static constexpr const char* ASSEMBLY_SRC_GUID_KEY = "assembly_src_guid";
 
 static constexpr const char *MESH_STAT_FACE_COUNT           = "face_count";
 static constexpr const char* MESH_STAT_EDGES_FIXED          = "edges_fixed";
@@ -1176,6 +1184,15 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         // Note: This mapping is populated in _generate_volumes_new.
         std::unordered_map<int, VolumeColorInfo> m_volume_color_data;
 
+        // BBS: per-volume assemble matrices read from <assemble_item volume_id="..."> in model_settings.config..
+        struct PendingVolumeAssemble
+        {
+            int         model_object_index{-1};
+            int         volume_id{-1};
+            Transform3d transform{Transform3d::Identity()};
+        };
+        std::vector<PendingVolumeAssemble> m_pending_volume_assemble;
+
     public:
         _BBS_3MF_Importer();
         ~_BBS_3MF_Importer();
@@ -1236,6 +1253,9 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         void _extract_embossed_svg_shape_file(const std::string &filename, mz_zip_archive &archive, const mz_zip_archive_file_stat &stat);
 
         void _extract_filament_sequence_from_archive(mz_zip_archive& archive, const mz_zip_archive_file_stat &stat);
+        void _extract_assembly_tree_from_archive(mz_zip_archive& archive, const mz_zip_archive_file_stat& stat);
+        void _extract_assembly_steps_json_from_archive(mz_zip_archive& archive, const mz_zip_archive_file_stat &stat);
+        void _extract_assembly_model_from_archive(mz_zip_archive& archive, const mz_zip_archive_file_stat &stat);
 
         // handlers to parse the .model file
         void _handle_start_model_xml_element(const char* name, const char** attributes);
@@ -2005,6 +2025,15 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
                 else if (!dont_load_config && boost::algorithm::iequals(name, FILAMENT_SEQUENCE_FILE)){
                     _extract_filament_sequence_from_archive(archive,stat);
                 }
+                else if (!dont_load_config && boost::algorithm::iequals(name, ASSEMBLY_TREE_FILE)) {
+                    _extract_assembly_tree_from_archive(archive, stat);
+                }
+                else if (!dont_load_config && boost::algorithm::iequals(name, ASSEMBLY_STEP_JSON_FILE)){
+                    _extract_assembly_steps_json_from_archive(archive, stat);
+                }
+                else if (!dont_load_config && boost::algorithm::iequals(name, ASSEMBLY_MODEL_FILE)){
+                    _extract_assembly_model_from_archive(archive, stat);
+                }
                 else if (boost::algorithm::istarts_with(name, AUXILIARY_DIR)) {
                     // extract auxiliary directory to temp directory, do nothing for restore
                     if (m_load_aux && !m_load_restore)
@@ -2232,6 +2261,18 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
                 }
             }
         }
+        // BBS: replay deferred per-volume assemble matrices collected while parsing <assemble_item volume_id="..."> in model_settings.config.
+        for (const PendingVolumeAssemble &entry : m_pending_volume_assemble) {
+            if (entry.model_object_index < 0 || entry.model_object_index >= (int) m_model->objects.size())
+                continue;
+            ModelObject *mo = m_model->objects[entry.model_object_index];
+            if (mo == nullptr)
+                continue;
+            if (entry.volume_id < 0 || entry.volume_id >= (int) mo->volumes.size())
+                continue;
+            mo->volumes[entry.volume_id]->set_assemble_from_transform(entry.transform);
+        }
+        m_pending_volume_assemble.clear();
 
         // If instances contain a single volume, the volume offset should be 0,0,0
         // This equals to say that instance world position and volume world position should match
@@ -2418,15 +2459,13 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
             for (int index = delete_ids.size() - 1; index >= 0; index--)
                 m_model->delete_object(delete_ids[index]);
         }
-
-        //BBS progress point
         BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << ":" << __LINE__ << boost::format("import 3mf IMPORT_STAGE_FINISH\n");
         if (proFn) {
             proFn(IMPORT_STAGE_FINISH, 0, 1, cb_cancel);
             if (cb_cancel)
                 return false;
         }
-
+        // NOTE: we do NOT deserialize m_assembly_steps_tree_data here, even though ModelObject::name is finalized by this point.
         return true;
     }
 
@@ -3331,6 +3370,53 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
             add_error(std::string("Error while parsing filament sequence JSON: ") + e.what());
             return;
         }
+    }
+
+
+    void _BBS_3MF_Importer::_extract_assembly_tree_from_archive(mz_zip_archive& archive, const mz_zip_archive_file_stat& stat)
+    {
+        if (stat.m_uncomp_size <= 0) {
+            add_error("Error while reading assembly tree data to buffer");
+            return;
+        }
+
+        std::string buffer((size_t) stat.m_uncomp_size, 0);
+        mz_bool res = mz_zip_reader_extract_file_to_mem(&archive, stat.m_filename, (void*) buffer.data(), (size_t) stat.m_uncomp_size, 0);
+        if (res == 0) {
+            add_error("Error while reading assembly tree data to buffer");
+            return;
+        }
+
+        m_model->set_assembly_tree_json_str(std::move(buffer));
+    }
+
+    void _BBS_3MF_Importer::_extract_assembly_steps_json_from_archive(mz_zip_archive &archive, const mz_zip_archive_file_stat &stat)
+    {
+        if (stat.m_uncomp_size <= 0)
+            return;
+        std::string buffer((size_t)stat.m_uncomp_size, 0);
+        mz_bool res = mz_zip_reader_extract_file_to_mem(&archive, stat.m_filename, (void*)buffer.data(), (size_t)stat.m_uncomp_size, 0);
+        if (res == 0) {
+            add_error("Error while reading assembly.json from archive");
+            return;
+        }
+        // NOTE: do NOT deserialize into m_assembly_steps_tree_data here. This handler is invoked from the zip iteration loop in _load_model_from_file, which runs *before* the "assemble objects"
+        m_model->set_assembly_steps_json_str(std::move(buffer));
+    }
+
+    void _BBS_3MF_Importer::_extract_assembly_model_from_archive(mz_zip_archive &archive, const mz_zip_archive_file_stat &stat)
+    {
+        if (stat.m_uncomp_size <= 0)
+            return;
+        std::string buffer((size_t)stat.m_uncomp_size, 0);
+        mz_bool res = mz_zip_reader_extract_file_to_mem(&archive, stat.m_filename, (void*)buffer.data(), (size_t)stat.m_uncomp_size, 0);
+        if (res == 0) {
+            add_error("Error while reading assembly_model.json from archive");
+            return;
+        }
+        // Keep only the raw JSON here. The independent assembly model is rebuilt lazily on first entry to
+        // the assembly view (meshes are rebound from the prepare model by part_guid), see Plater.
+        m_model->set_assembly_model_json_str(std::move(buffer));
     }
 
 
@@ -4359,6 +4445,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         //BBS: refine the part type logic
         std::string subtype_str = bbs_get_attribute_value_string(attributes, num_attributes, SUBTYPE_ATTR);
         ModelVolumeType type = ModelVolume::type_from_string(subtype_str);
+        std::string part_guid_str = bbs_get_attribute_value_string(attributes, num_attributes, PART_GUID_KEY);
 
         int subbject_id = bbs_get_attribute_value_int(attributes, num_attributes, ID_ATTR);
 
@@ -4366,6 +4453,9 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
             object->second.volumes.emplace_back(first_triangle_id, last_triangle_id, type);
         else
             object->second.volumes.emplace_back(subbject_id, type);
+        ObjectMetadata::VolumeMetadata &volume_metadata = object->second.volumes.back();
+        if (!part_guid_str.empty())
+            volume_metadata.metadata.emplace_back(PART_GUID_KEY, part_guid_str);
         return true;
     }
 
@@ -4842,10 +4932,20 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
 
         Transform3d transform = bbs_get_transform_from_3mf_specs_string(bbs_get_attribute_value_string(attributes, num_attributes, TRANSFORM_ATTR));
         Vec3d ofs2ass = bbs_get_offset_from_3mf_specs_string(bbs_get_attribute_value_string(attributes, num_attributes, OFFSET_ATTR));
+        // BBS: optional volume index. When the attribute is missing the entry targets the instance (legacy behaviour). When present it carries a per-volume assemble matrix.
+        const bool has_volume_attr = (bbs_get_attribute_value_charptr(attributes, num_attributes, VOLUMEID_ATTR) != nullptr);
+        int  volume_id      = has_volume_attr ? bbs_get_attribute_value_int(attributes, num_attributes, VOLUMEID_ATTR) : -1;
         if (object_id < m_model->objects.size()) {
-            if (instance_id < m_model->objects[object_id]->instances.size()) {
-                m_model->objects[object_id]->instances[instance_id]->set_assemble_from_transform(transform);
-                m_model->objects[object_id]->instances[instance_id]->set_offset_to_assembly(ofs2ass);
+            if (has_volume_attr) {
+                // BBS: model_settings.config is parsed before _generate_volumes_new fills ModelObject::volumes
+                if (volume_id >= 0)
+                    m_pending_volume_assemble.push_back({object_id, volume_id, transform});
+            } else {
+                ModelObject *mo = m_model->objects[object_id];
+                if (instance_id < (int) mo->instances.size()) {
+                    mo->instances[instance_id]->set_assemble_from_transform(transform);
+                    mo->instances[instance_id]->set_offset_to_assembly(ofs2ass);
+                }
             }
         }
         return true;
@@ -5244,6 +5344,10 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
                     volume->source.is_converted_from_inches = metadata.value == "1";
                 else if (metadata.key == SOURCE_IN_METERS)
                     volume->source.is_converted_from_meters = metadata.value == "1";
+                else if (metadata.key == PART_GUID_KEY)
+                    volume->set_part_guid(metadata.value);
+                else if (metadata.key == ASSEMBLY_SRC_GUID_KEY)
+                    volume->set_assembly_src_guid(metadata.value);
                 else if ((metadata.key == MATRIX_KEY) || (metadata.key == MESH_SHARED_KEY))
                     continue;
                 else
@@ -5399,6 +5503,10 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
                     volume->source.is_converted_from_inches = metadata.value == "1";
                 else if (metadata.key == SOURCE_IN_METERS)
                     volume->source.is_converted_from_meters = metadata.value == "1";
+                else if (metadata.key == PART_GUID_KEY)
+                    volume->set_part_guid(metadata.value);
+                else if (metadata.key == ASSEMBLY_SRC_GUID_KEY)
+                    volume->set_assembly_src_guid(metadata.value);
                 else
                     volume->config.set_deserialize(metadata.key, metadata.value, config_substitutions);
             }
@@ -6080,6 +6188,9 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         bool _add_custom_gcode_per_print_z_file_to_archive(mz_zip_archive& archive, Model& model, const DynamicPrintConfig* config);
         bool _add_auxiliary_dir_to_archive(mz_zip_archive &archive, const std::string &aux_dir, PackingTemporaryData &data);
         bool _add_filament_sequence_file_to_archive(mz_zip_archive& archive, const PlateDataPtrs& plate_data_list);
+        bool _add_assembly_tree_file_to_archive(mz_zip_archive& archive, const Model& model);
+        bool _add_assembly_stpes_json_file_to_archive(mz_zip_archive &archive, const Model &model);
+        bool _add_assembly_model_file_to_archive(mz_zip_archive &archive, const Model &model);
 
         static int convert_instance_id_to_resource_id(const Model& model, int obj_id, int instance_id)
         {
@@ -6620,6 +6731,18 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
             return false;
         }
 
+        if (!_add_assembly_tree_file_to_archive(archive, model)) {
+            BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format(", _add_assembly_tree_file_to_archive failed\n");
+            return false;
+        }
+        if (!_add_assembly_stpes_json_file_to_archive(archive, model)) {
+            BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format(", _add_assembly_stpes_json_file_to_archive failed\n");
+            return false;
+        }
+        if (!_add_assembly_model_file_to_archive(archive, model)) {
+            BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format(", _add_assembly_model_file_to_archive failed\n");
+            return false;
+        }
         //BBS progress point
         BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << ":" <<__LINE__ << boost::format(", before add auxiliary dir to 3mf\n");
         if (proFn) {
@@ -7980,6 +8103,11 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
                         const VolumeToObjectIDMap& objectIDs = obj_metadata.second.volumes_objectID;
                         VolumeToObjectIDMap::const_iterator it = objectIDs.find(volume);
                         if (it != objectIDs.end()) {
+                            // stores volume's stable cross-model part GUID (assembly view independent model).
+                            // Assign one to every model part now so the identity persists across reloads.
+                            if (volume->is_model_part())
+                                volume->ensure_part_guid();
+
                             // stores volume's offsets
                             stream << "    <" << PART_TAG << " ";
                             //stream << FIRST_TRIANGLE_ID_ATTR << "=\"" << it->second.first_triangle_id << "\" ";
@@ -7989,7 +8117,10 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
                                 volume_id = m_volume_paths.find(volume)->second.second;
                             stream << ID_ATTR << "=\"" << volume_id << "\" ";
 
-                            stream << SUBTYPE_ATTR << "=\"" << ModelVolume::type_to_string(volume->type()) << "\">\n";
+                            stream << SUBTYPE_ATTR << "=\"" << ModelVolume::type_to_string(volume->type()) << "\"";
+                            if (!volume->part_guid().empty())
+                                stream << " " << PART_GUID_KEY << "=\"" << xml_escape(volume->part_guid()) << "\"";
+                            stream << ">\n";
                             //stream << "    <" << PART_TAG << " " << ID_ATTR << "=\"" << it->second << "\" " << SUBTYPE_ATTR << "=\"" << ModelVolume::type_to_string(volume->type()) << "\">\n";
 
                             // stores volume's name
@@ -8268,6 +8399,23 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
                         stream << ofs2ass(0) << " " << ofs2ass(1) << " " << ofs2ass(2);
                     stream << "\" />\n";
                     }
+                }
+                // BBS: per-volume assemble transformation. Stored as additional <assemble_item>
+                for (int volume_idx = 0; volume_idx < (int) obj->volumes.size(); ++volume_idx) {
+                    const ModelVolume *mv = obj->volumes[volume_idx];
+                    if (mv == nullptr || !mv->is_assemble_initialized())
+                        continue;
+                    stream << "   <" << ASSEMBLE_ITEM_TAG << " " << OBJECT_ID_ATTR << "=\"" << object_data.object_id << "\" ";
+                    stream << VOLUMEID_ATTR << "=\"" << volume_idx << "\" " << TRANSFORM_ATTR << "=\"";
+                    const Transform3d volume_assemble_trans = mv->get_assemble_transformation().get_matrix();
+                    for (unsigned c = 0; c < 4; ++c) {
+                        for (unsigned r = 0; r < 3; ++r) {
+                            stream << volume_assemble_trans(r, c);
+                            if (r != 2 || c != 3)
+                                stream << " ";
+                        }
+                    }
+                    stream << "\" />\n";
                 }
             }
         }
@@ -8732,7 +8880,7 @@ bool _BBS_3MF_Exporter::_add_filament_sequence_file_to_archive(mz_zip_archive& a
         std::string plate_idx = "plate_"+std::to_string(idx+1);
         std::vector<unsigned int> sequence = plate_data->filament_change_sequence;
         std::transform(sequence.begin(), sequence.end(), sequence.begin(), [](unsigned int v) { return v + 1; }); // to 1 based idx
-       
+
         bool enable_dynamic_map = plate_data->nozzle_group_result && plate_data->nozzle_group_result->is_support_dynamic_nozzle_map();
         std::string seq_key;
         if(enable_dynamic_map)
@@ -8759,6 +8907,51 @@ bool _BBS_3MF_Exporter::_add_filament_sequence_file_to_archive(mz_zip_archive& a
     return true;
 }
 
+bool _BBS_3MF_Exporter::_add_assembly_tree_file_to_archive(mz_zip_archive& archive, const Model& model)
+{
+    // Project save: serialize the in-memory tree to JSON once at the I/O boundary.No other site should be calling AssemblyTreeData::to_json_string() during a session.
+    const AssemblyTreeData& tree = model.get_assembly_tree_data();
+    if (tree.empty() || !AssemblyTreeData::show_origin_step_tree)
+        return true;
+
+    const std::string tree_str = tree.to_json_string();
+    if (!mz_zip_writer_add_mem(&archive, ASSEMBLY_TREE_FILE.c_str(), tree_str.c_str(), tree_str.size(), MZ_DEFAULT_COMPRESSION)) {
+        add_error("Unable to add assembly tree file to archive");
+        BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format(", store assembly tree to 3mf, length %1%, failed\n") % tree_str.length();
+        return false;
+    }
+    return true;
+}
+
+bool _BBS_3MF_Exporter::_add_assembly_stpes_json_file_to_archive(mz_zip_archive &archive, const Model &model)
+{
+    const std::string& steps_json_str = model.get_assembly_steps_json_str();
+    if (steps_json_str.empty())
+        return true;
+    if (!mz_zip_writer_add_mem(&archive, ASSEMBLY_STEP_JSON_FILE.c_str(), steps_json_str.c_str(), steps_json_str.size(),
+                               MZ_DEFAULT_COMPRESSION)) {
+        add_error("Unable to add assembly.json to archive");
+        BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format(", store assembly.json to 3mf, length %1%, failed\n") % steps_json_str.size();
+        return false;
+    }
+    return true;
+}
+
+bool _BBS_3MF_Exporter::_add_assembly_model_file_to_archive(mz_zip_archive &archive, const Model &model)
+{
+    // The independent assembly model object graph, pre-serialized by the GUI (Plater) into the prepare
+    // model before export. Empty when the project never entered the assembly view.
+    const std::string &assembly_model_json_str = model.get_assembly_model_json_str();
+    if (assembly_model_json_str.empty())
+        return true;
+    if (!mz_zip_writer_add_mem(&archive, ASSEMBLY_MODEL_FILE.c_str(), assembly_model_json_str.c_str(), assembly_model_json_str.size(),
+                               MZ_DEFAULT_COMPRESSION)) {
+        add_error("Unable to add assembly_model.json to archive");
+        BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format(", store assembly_model.json to 3mf, length %1%, failed\n") % assembly_model_json_str.size();
+        return false;
+    }
+    return true;
+}
 // Perform conversions based on the config values available.
 //FIXME provide a version of PrusaSlicer that stored the project file (3MF).
 static void handle_legacy_project_loaded(unsigned int version_project_file, DynamicPrintConfig& config)
